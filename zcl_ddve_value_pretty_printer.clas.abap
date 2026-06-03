@@ -3,18 +3,20 @@
 CLASS zcl_ddve_value_pretty_printer DEFINITION
   PUBLIC
   CREATE PRIVATE
-  GLOBAL FRIENDS zcl_ddve_prettyprinter_factory. "needed for instantiation
+  GLOBAL FRIENDS zcl_ddve_prettyprinter_factory.
 
   PUBLIC SECTION.
-    INTERFACES: zif_ddve_value_pretty_printer.
-    ALIASES: format FOR zif_ddve_value_pretty_printer~format.
+    INTERFACES zif_ddve_value_pretty_printer.
+
+    ALIASES format FOR zif_ddve_value_pretty_printer~format.
 
   PROTECTED SECTION.
+
   PRIVATE SECTION.
     TYPES: BEGIN OF t_char_offset,
              count     TYPE i,
              offset_no TYPE i,
-             char(1)   TYPE c,
+             char      TYPE c LENGTH 1,
            END OF t_char_offset,
            tt_char_offset TYPE STANDARD TABLE OF t_char_offset WITH DEFAULT KEY,
            BEGIN OF ENUM enum_terminal STRUCTURE c_terminal,
@@ -34,13 +36,13 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
              spaces,
            END OF ENUM enum_terminal STRUCTURE c_terminal,
            BEGIN OF ENUM enum_sub_terminal STRUCTURE c_sub_terminal,
-             na,                    " not applicable
-             assign_operator,       " =
-             value_operator,        " VALUE #(
-             parenthesis_open,      " (
-             parenthesis_close,     " )
-             empty_line,            " ( )
-             end_of_statement,      " .
+             na,                " not applicable
+             assign_operator,   " =
+             value_operator,    " VALUE #(
+             parenthesis_open,  " (
+             parenthesis_close, " )
+             empty_line,        " ( )
+             end_of_statement,  " .
            END OF ENUM enum_sub_terminal STRUCTURE c_sub_terminal,
            BEGIN OF ty_trace,
              parent_sync_point TYPE i,
@@ -59,10 +61,10 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
            END OF ty_sync_point.
 
     CONSTANTS: c_newline              TYPE abap_char1 VALUE cl_abap_char_utilities=>cr_lf,
-               c_regex_lhs            TYPE string VALUE  `[A-Z][A-Z0-9_/\-\[\]\>]+` ##NO_TEXT,
-               c_regex_number         TYPE string VALUE `[0-9]+` ##NO_TEXT,
-               c_regex_text_literal   TYPE string VALUE `'(?:''|[^'])+'` ##NO_TEXT,
-               c_regex_string_literal TYPE string VALUE '`(?:``|[^`])+`' ##NO_TEXT.
+               c_regex_lhs            TYPE string     VALUE `[A-Z][A-Z0-9_/\-\[\]\>]+` ##NO_TEXT,
+               c_regex_number         TYPE string     VALUE `[0-9]+` ##NO_TEXT,
+               c_regex_text_literal   TYPE string     VALUE `'(?:''|[^'])+'` ##NO_TEXT,
+               c_regex_string_literal TYPE string     VALUE '`(?:``|[^`])+`' ##NO_TEXT.
 
     DATA: steering    TYPE tt_char_offset,
           offset      TYPE i,
@@ -70,184 +72,101 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
           trace_tab   TYPE TABLE OF ty_trace
                         WITH NON-UNIQUE SORTED KEY k1 COMPONENTS parent_sync_point terminal offset,
           sync_points TYPE TABLE OF ty_sync_point.
-    METHODS:
-      get_spaces RETURNING VALUE(r_spaces_string) TYPE string,
-      get_offset_in_current_line
-        IMPORTING
-          i_content       TYPE string
-        RETURNING
-          VALUE(r_offset) TYPE i,
-      get_offset_for_apostroph
-        IMPORTING
-          i_content       TYPE string
-        RETURNING
-          VALUE(r_offset) TYPE i,
-      get_offset_for_closing_bracket
-        IMPORTING
-          i_content       TYPE string
-        RETURNING
-          VALUE(r_offset) TYPE i,
-      clean_up_steering_tab
-        IMPORTING
-          i_last_char TYPE c,
-      assign        RAISING          lcx_no_match,
-      find_spaces,
-      rhs RAISING lcx_no_match,
-      add_empty_value_operator RAISING lcx_no_match,
-      add_structure_rhs RAISING lcx_no_match,
-      add_structure_content RAISING lcx_no_match,
-      add_table RAISING lcx_no_match,
-      inner_rhs RAISING lcx_no_match,
 
-      "! Left Hand Side of ASSIGNMENT aka LHS
-      "! @raising lcx_no_match |
-      lhs RAISING lcx_no_match,
-      add_number RAISING lcx_no_match,
+    METHODS: "! <p class="shorttext synchronized" lang="en">assign tries to build this: LHS = RHS</p>
+      "!
+      "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
+      assign                   RAISING lcx_no_match,
+      find_spaces,
+      "! <p class="shorttext synchronized" lang="en">RHS could be : number | text | string | empty | struct | table</p>
+      "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
+      rhs                      RAISING lcx_no_match,
+      "! <p class="shorttext synchronized" lang="en">empty : 'VALUE #( )'</p>
+      "!
+      "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
+      add_empty_value_operator RAISING lcx_no_match,
+      "! <p class="shorttext synchronized" lang="en">struct : 'VALUE #(' struct2 ')'</p>
+      "!
+      "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
+      add_structure_rhs        RAISING lcx_no_match,
+      "! <p class="shorttext synchronized" lang="en">struct2 : ( LHS '=' RHS )+</p>
+      "!
+      "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
+      add_structure_content    RAISING lcx_no_match,
+      "! <p class="shorttext synchronized" lang="en">table : 'VALUE #(' ( '( )' | ( '(' inner_rhs ')' )+ ) ')'</p>
+      "!
+      "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
+      add_table                RAISING lcx_no_match,
+      "! <p class="shorttext synchronized" lang="en"> inner_rhs : number | text | string | empty | struct2</p>
+      "!
+      "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
+      inner_rhs                RAISING lcx_no_match,
+      "! <p class="shorttext synchronized" lang="en">Left Hand Side of ASSIGNMENT aka LHS</p>
+      "!
+      "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
+      lhs                      RAISING lcx_no_match,
+      add_number               RAISING lcx_no_match,
+
       non_terminal
-        IMPORTING
-                  i_sub_terminal TYPE enum_sub_terminal
+        IMPORTING i_sub_terminal TYPE enum_sub_terminal
                   i_regex        TYPE csequence
         RAISING   lcx_no_match,
 
-      add_text_literal RAISING lcx_no_match,
+      add_text_literal   RAISING lcx_no_match,
       add_string_literal RAISING lcx_no_match,
+
       set_offset_for_regex
         IMPORTING i_regex TYPE csequence
         RAISING   lcx_no_match,
+
       add_to_trace,
+
       set_sync_point
-        IMPORTING
-          i_terminal                        TYPE enum_terminal
-          i_sub_terminal                    TYPE enum_sub_terminal DEFAULT c_sub_terminal-na
-        RETURNING
-          VALUE(r_current_sync_point_index) TYPE i,
+        IMPORTING i_terminal                        TYPE enum_terminal
+                  i_sub_terminal                    TYPE enum_sub_terminal DEFAULT c_sub_terminal-na
+        RETURNING VALUE(r_current_sync_point_index) TYPE i,
+
       reset_to_sync_point
-        IMPORTING
-          i_sync_point_index TYPE i,
+        IMPORTING i_sync_point_index TYPE i,
+
       cancel_sync_point
-        IMPORTING
-          i_sync_point_index TYPE i,
+        IMPORTING i_sync_point_index TYPE i,
 
-      add_value_open_operator RAISING lcx_no_match,
+      add_value_open_operator RAISING   lcx_no_match,
+      add_parenthesis_close   RAISING   lcx_no_match,
+      add_assign_operator     RAISING   lcx_no_match,
+      add_end_of_statement    RAISING   lcx_no_match,
+      add_empty_line          RAISING   lcx_no_match,
+      add_parenthesis_open    RAISING   lcx_no_match,
+      parse                   IMPORTING i_text TYPE string,
 
-      add_parenthesis_close RAISING lcx_no_match,
-
-      add_assign_operator RAISING lcx_no_match,
-
-      add_end_of_statement RAISING lcx_no_match,
-
-      add_empty_line RAISING lcx_no_match,
-
-      add_parenthesis_open RAISING lcx_no_match.
-
-
-
+      render IMPORTING i_input         TYPE string
+             RETURNING VALUE(r_result) TYPE string.
 
 ENDCLASS.
 
 
-
-CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
-
-
-  METHOD get_spaces.
-    DATA(spaces_no) = me->steering[ lines( me->steering ) ]-offset_no.
-    r_spaces_string = repeat( val = ` ` occ = spaces_no ).
-  ENDMETHOD.
-
-
-  METHOD get_offset_in_current_line.
-    SPLIT i_content  AT c_newline INTO TABLE DATA(lt_split).
-    DATA(last_line) = lt_split[ lines( lt_split ) ].
-    r_offset = strlen( last_line ) + 1.
-  ENDMETHOD.
-
-
-  METHOD get_offset_for_apostroph.
-    SPLIT i_content  AT c_newline INTO TABLE DATA(lt_split).
-    DATA(last_line) = lt_split[ lines( lt_split ) ].
-
-    DATA(regex_matcher) = cl_abap_matcher=>create(  pattern = |\\S|
-                                                    text    = last_line    ).
-
-    regex_matcher->find_next( ).
-    r_offset = regex_matcher->get_offset( ).
-
-  ENDMETHOD.
-
-
-  METHOD get_offset_for_closing_bracket.
-    "find offset of corresponding opening bracket
-    "therefor we need to loop backwards in steering table
-
-    DATA(x_lines) = lines( me->steering ).
-
-    DO x_lines TIMES.
-      DATA(line) = me->steering[ x_lines ].
-      IF line-char EQ '('.
-        r_offset = line-offset_no.
-        EXIT.
-      ELSE.
-        IF x_lines = 1.
-          EXIT.
-        ELSE.
-          x_lines = x_lines - 1.
-        ENDIF.
-      ENDIF.
-    ENDDO.
-
-  ENDMETHOD.
-
-
-  METHOD clean_up_steering_tab.
-    CHECK i_last_char EQ |)|.
-    "a formating block is complete
-    "we need to clean up our steering data and remove infos about this complete formating block
-    DATA(x_lines) = lines( me->steering ).
-
-    DO x_lines TIMES.
-      DATA(line) = me->steering[ x_lines ].
-      DELETE me->steering INDEX x_lines.
-      IF line-char EQ |(|.
-        EXIT.
-      ENDIF.
-
-      IF x_lines = 1.
-        EXIT.
-      ELSE.
-        x_lines = x_lines - 1.
-      ENDIF.
-
-    ENDDO.
-
-  ENDMETHOD.
-
+CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
 
   METHOD assign.
     " assign tries to build this: LHS = RHS
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( i_terminal = c_terminal-assign ).
-
+        FINAL(current_sync_point_index) = set_sync_point( i_terminal = c_terminal-assign ).
         lhs( ).
-
         add_assign_operator( ).
-
         rhs( ).
-
         add_end_of_statement( ).
-
         add_to_trace( ).
       CLEANUP.
         reset_to_sync_point( current_sync_point_index ).
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD rhs.
-    "RHS could be : number | text | string | empty | struct | table
+    " RHS could be : number | text | string | empty | struct | table
     find_spaces( ).
-    DATA(current_sync_point_index) = set_sync_point( c_terminal-rhs ).
+    FINAL(current_sync_point_index) = set_sync_point( c_terminal-rhs ).
     TRY.
         TRY.
             add_number( ).
@@ -276,12 +195,11 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     add_to_trace( ).
   ENDMETHOD.
 
-
   METHOD add_empty_value_operator.
-    "empty : 'VALUE #( )'
+    " empty : 'VALUE #( )'
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( c_terminal-empty ).
+        FINAL(current_sync_point_index) = set_sync_point( c_terminal-empty ).
         set_offset_for_regex( `VALUE #\( \)` ).
         add_to_trace( ).
       CLEANUP.
@@ -289,12 +207,11 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD add_structure_rhs.
-    "struct : 'VALUE #(' struct2 ')'
+    " struct : 'VALUE #(' struct2 ')'
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( c_terminal-struct ).
+        FINAL(current_sync_point_index) = set_sync_point( c_terminal-struct ).
         add_value_open_operator( ).
         add_structure_content( ).
         add_parenthesis_close( ).
@@ -304,12 +221,11 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD add_structure_content.
-    "struct2 : ( LHS '=' RHS )+
+    " struct2 : ( LHS '=' RHS )+
     TRY.
         find_spaces( ).
-        DATA(structure_sync_point_index) = set_sync_point( c_terminal-struct2 ).
+        FINAL(structure_sync_point_index) = set_sync_point( c_terminal-struct2 ).
         set_sync_point( c_terminal-iteration ).
         lhs( ).
         add_assign_operator( ).
@@ -318,7 +234,7 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
         DO.
           TRY.
               find_spaces( ).
-              DATA(point2) = set_sync_point( c_terminal-iteration ).
+              FINAL(point2) = set_sync_point( c_terminal-iteration ).
               TRY.
                   lhs( ).
                 CATCH lcx_no_match.
@@ -338,12 +254,11 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD add_table.
-*    table : 'VALUE #(' ( '( )' | ( '(' inner_rhs ')' )+ ) ')'
+    " table : 'VALUE #(' ( '( )' | ( '(' inner_rhs ')' )+ ) ')'
     TRY.
         find_spaces( ).
-        DATA(outer_sync_point) = set_sync_point( c_terminal-table ).
+        FINAL(outer_sync_point) = set_sync_point( c_terminal-table ).
         add_value_open_operator( ).
         TRY.
             add_empty_line( ).
@@ -351,7 +266,7 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
             DO.
               TRY.
                   find_spaces( ).
-                  DATA(inner_sync_point) = set_sync_point( c_terminal-iteration ).
+                  FINAL(inner_sync_point) = set_sync_point( c_terminal-iteration ).
                   TRY.
                       add_parenthesis_open( ).
                     CATCH lcx_no_match.
@@ -365,7 +280,6 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
                   reset_to_sync_point( inner_sync_point ).
               ENDTRY.
             ENDDO.
-
         ENDTRY.
         add_parenthesis_close( ).
         add_to_trace( ).
@@ -374,12 +288,11 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD inner_rhs.
-*    inner_rhs : number | text | string | empty | struct2
+    " inner_rhs : number | text | string | empty | struct2
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( c_terminal-rhs2 ).
+        FINAL(current_sync_point_index) = set_sync_point( c_terminal-rhs2 ).
         TRY.
             add_number( ).
           CATCH lcx_no_match.
@@ -403,11 +316,10 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD lhs.
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( c_terminal-symbolname ).
+        FINAL(current_sync_point_index) = set_sync_point( c_terminal-symbolname ).
         " SCALAR
         " STRUCTURE
         " TABLE
@@ -416,8 +328,7 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
         " TABLE[1]-COMPONENT
         " VAR_2
         " /NAMESPACE/VARIABLE
-        "something like "CUT->ST03N_TRANSACTION_PROFILE" could also be a lhs
-
+        " something like "CUT->ST03N_TRANSACTION_PROFILE" could also be a lhs
 
         set_offset_for_regex( c_regex_lhs ).
         add_to_trace( ).
@@ -426,11 +337,10 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD add_number.
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( c_terminal-number ).
+        FINAL(current_sync_point_index) = set_sync_point( c_terminal-number ).
         set_offset_for_regex( c_regex_number ).
         add_to_trace( ).
       CLEANUP.
@@ -438,11 +348,11 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD non_terminal.
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( i_terminal = c_terminal-non_terminal i_sub_terminal = i_sub_terminal ).
+        FINAL(current_sync_point_index) = set_sync_point( i_terminal     = c_terminal-non_terminal
+                                                          i_sub_terminal = i_sub_terminal ).
         set_offset_for_regex( i_regex ).
         add_to_trace( ).
       CLEANUP.
@@ -450,11 +360,10 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD add_text_literal.
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( c_terminal-text_literal ).
+        FINAL(current_sync_point_index) = set_sync_point( c_terminal-text_literal ).
         set_offset_for_regex( c_regex_text_literal ).
         add_to_trace( ).
       CLEANUP.
@@ -462,11 +371,10 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD add_string_literal.
     TRY.
         find_spaces( ).
-        DATA(current_sync_point_index) = set_sync_point( c_terminal-string_literal ).
+        FINAL(current_sync_point_index) = set_sync_point( c_terminal-string_literal ).
         set_offset_for_regex( c_regex_string_literal ).
         add_to_trace( ).
       CLEANUP.
@@ -474,22 +382,20 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
-
   METHOD find_spaces.
     IF me->offset >= strlen( me->text ).
       RETURN.
     ENDIF.
-    FIND FIRST OCCURRENCE OF REGEX '^\s+' IN me->text+me->offset MATCH LENGTH DATA(length).
+    FIND FIRST OCCURRENCE OF REGEX '^\s+' IN me->text+me->offset MATCH LENGTH FINAL(length).
     IF sy-subrc = 0.
-      APPEND VALUE ty_trace(
-              sync_point        = 0
-              parent_sync_point = 0
-              terminal          = c_terminal-spaces
-              sub_terminal      = c_sub_terminal-na
-              offset            = me->offset
-              length            = length
-          ) TO me->trace_tab.
-      me->offset = me->offset + length.
+      APPEND VALUE ty_trace( sync_point        = 0
+                             parent_sync_point = 0
+                             terminal          = c_terminal-spaces
+                             sub_terminal      = c_sub_terminal-na
+                             offset            = offset
+                             length            = length )
+             TO me->trace_tab.
+      offset += length.
     ENDIF.
   ENDMETHOD.
 
@@ -497,13 +403,61 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     IF me->offset >= strlen( me->text ).
       RAISE EXCEPTION NEW lcx_no_match( ).
     ENDIF.
-    DATA(regex2) = |^{ i_regex }|.
-    FIND FIRST OCCURRENCE OF REGEX regex2 IN me->text+me->offset MATCH LENGTH DATA(length).
+    FINAL(regex2) = |^{ i_regex }|.
+    FIND FIRST OCCURRENCE OF REGEX regex2 IN me->text+me->offset MATCH LENGTH FINAL(length).
     IF sy-subrc = 0.
       offset += length.
     ELSE.
       RAISE EXCEPTION NEW lcx_no_match( ).
     ENDIF.
+  ENDMETHOD.
+
+  METHOD parse.
+    text        = i_text.
+    offset      = 0.
+    trace_tab   = VALUE #( ).
+    sync_points = VALUE #( ).
+    TRY.
+        assign( ).
+      CATCH lcx_parser_interrupt
+            lcx_no_match INTO FINAL(lx_error) ##NEEDED.
+        zcl_ddve_debugger_integration=>debug_debugger_if_needed( ).
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD render.
+    DATA(indent) = 0.
+    FINAL(indent_step) = 8.
+    DATA(indent_spaces) = repeat( val = ` `
+                                  occ = indent ).
+
+    LOOP AT me->trace_tab REFERENCE INTO DATA(trace_line).
+      CASE trace_line->terminal.
+        WHEN c_terminal-symbolname
+              OR c_terminal-non_terminal
+              OR c_terminal-number
+              OR c_terminal-text_literal
+              OR c_terminal-string_literal
+              OR c_terminal-empty
+              OR c_terminal-spaces.
+          r_result = r_result && substring( val = i_input
+                                            off = trace_line->offset
+                                            len = trace_line->length ).
+      ENDCASE.
+
+      IF trace_line->terminal = c_terminal-iteration.
+        r_result = |{ r_result }\n{ indent_spaces }|.
+      ELSEIF    trace_line->sub_terminal = c_sub_terminal-value_operator
+             OR trace_line->sub_terminal = c_sub_terminal-parenthesis_open.
+        indent += indent_step.
+        indent_spaces = indent_spaces && repeat( val = ` `
+                                                 occ = indent_step ).
+        r_result = |{ r_result }\n{ indent_spaces }|.
+      ELSEIF trace_line->sub_terminal = c_sub_terminal-parenthesis_close.
+        indent -= indent_step.
+        SHIFT indent_spaces LEFT BY indent_step PLACES.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD zif_ddve_value_pretty_printer~format.
@@ -528,144 +482,79 @@ CLASS ZCL_DDVE_VALUE_PRETTY_PRINTER IMPLEMENTATION.
     " number : ^[0-9]+
     "
     " text : ^'(?:''|[^'])+'
-
-    me->text        = i_unformated_value_content.
-    me->offset      = 0.
-    me->trace_tab   = VALUE #( ).
-    me->sync_points = VALUE #( ).
-    TRY.
-        assign( ).
-      CATCH
-      lcx_parser_interrupt
-      lcx_no_match INTO DATA(lx_error). " TODO: variable is assigned but never used (ABAP cleaner)
-        zcl_ddve_debugger_integration=>debug_debugger_if_needed( ).
-    ENDTRY.
-
-    DATA(indent) = 0.
-    DATA(indent_step) = 8.
-    DATA(indent_spaces) = repeat( val = ` `
-                                  occ = indent ).
-
-    LOOP AT me->trace_tab REFERENCE INTO DATA(trace_line).
-
-      CASE trace_line->terminal.
-        WHEN c_terminal-symbolname
-              OR c_terminal-non_terminal
-              OR c_terminal-number
-              OR c_terminal-text_literal
-              OR c_terminal-string_literal
-              OR c_terminal-empty
-              OR c_terminal-spaces.
-          r_formated_content = r_formated_content && substring( val = i_unformated_value_content
-                                                                off = trace_line->offset
-                                                                len = trace_line->length ).
-      ENDCASE.
-
-      IF trace_line->terminal = c_terminal-iteration.
-        r_formated_content = |{ r_formated_content }\n{ indent_spaces }|.
-      ELSEIF    trace_line->sub_terminal = c_sub_terminal-value_operator
-             OR trace_line->sub_terminal = c_sub_terminal-parenthesis_open.
-        indent += indent_step.
-        indent_spaces = indent_spaces && repeat( val = ` `
-                                                 occ = indent_step ).
-        r_formated_content = |{ r_formated_content }\n{ indent_spaces }|.
-      ELSEIF trace_line->sub_terminal = c_sub_terminal-parenthesis_close.
-        indent -= indent_step.
-        SHIFT indent_spaces LEFT BY indent_step PLACES.
-      ENDIF.
-
-    ENDLOOP.
+    parse( i_unformated_value_content ).
+    r_formated_content = render( i_unformated_value_content ).
   ENDMETHOD.
-
 
   METHOD add_to_trace.
-
     ASSIGN me->sync_points[ lines( me->sync_points ) ] TO FIELD-SYMBOL(<sync_point>).
-
-    APPEND VALUE ty_trace(
-            LET length = me->offset - <sync_point>-offset IN
-            sync_point        = lines( me->sync_points )
-            parent_sync_point = lines( me->sync_points ) - 1
-            terminal          = <sync_point>-terminal
-            sub_terminal      = <sync_point>-sub_terminal
-            offset            = <sync_point>-offset
-            length            = length
-        ) TO me->trace_tab.
-
+    APPEND VALUE ty_trace( LET length = offset - <sync_point>-offset IN
+                           sync_point        = lines( me->sync_points )
+                           parent_sync_point = lines( me->sync_points ) - 1
+                           terminal          = <sync_point>-terminal
+                           sub_terminal      = <sync_point>-sub_terminal
+                           offset            = <sync_point>-offset
+                           length            = length )
+           TO me->trace_tab.
     DELETE me->sync_points INDEX lines( me->sync_points ).
-
     IF 0 = 1.
-      RAISE EXCEPTION TYPE lcx_parser_interrupt.
+      RAISE EXCEPTION NEW lcx_parser_interrupt( ).
     ENDIF.
-
   ENDMETHOD.
-
 
   METHOD set_sync_point.
-
-    APPEND VALUE ty_sync_point(
-            terminal     = i_terminal
-            sub_terminal = i_sub_terminal
-            offset       = me->offset
-            trace_index  = lines( me->trace_tab )
-        ) TO me->sync_points.
-
+    APPEND VALUE ty_sync_point( terminal     = i_terminal
+                                sub_terminal = i_sub_terminal
+                                offset       = offset
+                                trace_index  = lines( me->trace_tab ) )
+           TO me->sync_points.
     r_current_sync_point_index = lines( me->sync_points ).
-
   ENDMETHOD.
-
 
   METHOD reset_to_sync_point.
-
     DELETE me->trace_tab FROM me->sync_points[ i_sync_point_index ]-trace_index + 1.
-    me->offset = me->sync_points[ i_sync_point_index ]-offset.
+    offset = sync_points[ i_sync_point_index ]-offset.
     DELETE me->sync_points FROM i_sync_point_index.
-
     IF 0 = 1.
-      RAISE EXCEPTION TYPE lcx_parser_interrupt.
+      RAISE EXCEPTION NEW lcx_parser_interrupt( ).
     ENDIF.
-
   ENDMETHOD.
-
 
   METHOD cancel_sync_point.
-
     DELETE me->trace_tab FROM me->sync_points[ i_sync_point_index ]-trace_index + 1.
     DELETE me->sync_points FROM i_sync_point_index.
-
     IF 0 = 1.
-      RAISE EXCEPTION TYPE lcx_parser_interrupt.
+      RAISE EXCEPTION NEW lcx_parser_interrupt( ).
     ENDIF.
-
   ENDMETHOD.
-
 
   METHOD add_value_open_operator.
-    non_terminal( i_sub_terminal = c_sub_terminal-value_operator i_regex = `VALUE #\(` ).
+    non_terminal( i_sub_terminal = c_sub_terminal-value_operator
+                  i_regex        = `VALUE #\(` ).
   ENDMETHOD.
-
 
   METHOD add_parenthesis_close.
-    non_terminal( i_sub_terminal = c_sub_terminal-parenthesis_close i_regex = `\)` ).
+    non_terminal( i_sub_terminal = c_sub_terminal-parenthesis_close
+                  i_regex        = `\)` ).
   ENDMETHOD.
-
 
   METHOD add_assign_operator.
-    non_terminal( i_sub_terminal = c_sub_terminal-assign_operator i_regex = '=' ).
+    non_terminal( i_sub_terminal = c_sub_terminal-assign_operator
+                  i_regex        = '=' ).
   ENDMETHOD.
-
 
   METHOD add_end_of_statement.
-    non_terminal( i_sub_terminal = c_sub_terminal-end_of_statement i_regex = '\.' ).
+    non_terminal( i_sub_terminal = c_sub_terminal-end_of_statement
+                  i_regex        = '\.' ).
   ENDMETHOD.
-
 
   METHOD add_empty_line.
-    non_terminal( i_sub_terminal = c_sub_terminal-empty_line i_regex = '\( \)' ).
+    non_terminal( i_sub_terminal = c_sub_terminal-empty_line
+                  i_regex        = '\( \)' ).
   ENDMETHOD.
 
-
   METHOD add_parenthesis_open.
-    non_terminal( i_sub_terminal = c_sub_terminal-parenthesis_open i_regex = '\(' ).
+    non_terminal( i_sub_terminal = c_sub_terminal-parenthesis_open
+                  i_regex        = '\(' ).
   ENDMETHOD.
 ENDCLASS.

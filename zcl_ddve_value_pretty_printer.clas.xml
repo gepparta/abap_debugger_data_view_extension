@@ -12,6 +12,48 @@
     <UNICODE>X</UNICODE>
     <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
    </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CMPNAME>ADD_EMPTY_VALUE_OPERATOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>empty : &apos;VALUE #( )&apos;</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CMPNAME>ADD_STRUCTURE_CONTENT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>struct2 : ( LHS &apos;=&apos; RHS )+</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CMPNAME>ADD_STRUCTURE_RHS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>struct : &apos;VALUE #(&apos; struct2 &apos;)&apos;</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CMPNAME>ADD_TABLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>table : &apos;VALUE #(&apos; ( &apos;( )&apos; | ( &apos;(&apos; inner_rhs &apos;)&apos; )+ ) &apos;)&apos;</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CMPNAME>ASSIGN</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>assign tries to build this: LHS = RHS</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CMPNAME>INNER_RHS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT> inner_rhs : number | text | string | empty | struct2</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CMPNAME>LHS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Left Hand Side of ASSIGNMENT aka LHS</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CMPNAME>RHS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>RHS could be : number | text | string | empty | struct | tab</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
   </asx:values>
  </asx:abap>
 </abapGit>

@@ -48,7 +48,7 @@ ENDCLASS.
 
 
 CLASS zcl_ddve_table IMPLEMENTATION.
-  METHOD add_itab.
+METHOD add_itab.
     DATA table_line_context TYPE string.
 
     TRY.
@@ -83,23 +83,22 @@ i_table = i_table  ) ).
             CHECK     <field> IS ASSIGNED
                   AND <field> IS NOT INITIAL.
 
-            DATA(varvalue) = COND tpda_var_value( WHEN field_info-datatype = |TTYP| THEN
-                                                    me->add_itab( i_current_context  = space
-                                                                  i_table            = <field>
-                                                                  i_dont_add_a_point = abap_true )
-                                                  WHEN field_info-datatype = |STRU| THEN
-                                                    structure->add_structure(
-                                                        i_structure       = <field>
-                                                        i_field_catalog   = simple_field_catalog->get_by_data(
-                                                                                i_structure = <field> )
-                                                        i_current_context = || )
-                                                  ELSE
-                                                    <field>   ). " it must be a component
+            DATA(varvalue) = COND tpda_var_value(
+                               WHEN field_info-datatype = zcl_ddve_abap_typedescr=>table_type THEN
+                                 me->add_itab( i_current_context  = space
+                                              i_table            = <field>
+                                              i_dont_add_a_point = abap_true )
+                               WHEN field_info-datatype = zcl_ddve_abap_typedescr=>structure_type THEN
+                                 structure->add_structure(
+                                     i_structure     = <field>
+                                     i_field_catalog = simple_field_catalog->get_by_data(
+                                                           i_structure = <field> ) )
+                               ELSE
+                                 <field> ).  " it must be a component
 
-            table_line_context =  component->add( i_datatype        = field_info-datatype
-                                                  i_current_context = table_line_context
-                                                  i_component       = varvalue         " here we only pass already given value as string
-                                                  i_component_info  = field_info  ).
+            table_line_context = component->add( i_current_context = table_line_context
+                                                 i_component       = varvalue
+                                                 i_component_info  = field_info  ).
 
           ENDLOOP.
           IF table_line_context <> space.
@@ -146,20 +145,17 @@ i_table = i_table  ) ).
                                     i_dont_add_a_point = i_dont_add_a_point    ).
   ENDMETHOD.
 
-  METHOD show_popup_w_content.
-    DATA(content_4_display) = prepare_output( i_fieldcatalog = i_fieldcatalog
-                                              i_table        = i_table
-                                              i_table_title  = i_table_title ).
-    TRY.
-        DATA(formated_content) = zcl_ddve_prettyprinter_factory=>create( )->format( content_4_display ).
-      CATCH cx_class_not_existent INTO DATA(cx_class_not_existent). " TODO: variable is assigned but never used (ABAP cleaner)
-        " formatting went wrong, fallback using non formatted text
-        formated_content = content_4_display.
-    ENDTRY.
-    cl_demo_output=>set_mode( cl_demo_output=>text_mode ). " set to text mode to be more compatible with minus signs and so on
-    cl_demo_output=>write_data( formated_content ).
-    cl_demo_output=>display( ).
-  ENDMETHOD.
+METHOD show_popup_w_content.
+  DATA(content_4_display) = prepare_output( i_fieldcatalog = i_fieldcatalog
+                                            i_table        = i_table
+                                            i_table_title  = i_table_title ).
+  TRY.
+      DATA(formated_content) = zcl_ddve_prettyprinter_factory=>create( )->format( content_4_display ).
+    CATCH cx_class_not_existent INTO DATA(cx_class_not_existent).
+      formated_content = content_4_display.
+  ENDTRY.
+  NEW zcl_ddve_output_presenter( )->display_text( formated_content ).
+ENDMETHOD.
 
   METHOD filter_table_from_alv.
     FIELD-SYMBOLS <filtered_table> TYPE table.

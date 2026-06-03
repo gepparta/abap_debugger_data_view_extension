@@ -17,13 +17,11 @@ CLASS zcl_ddve_structure DEFINITION
                   i_struc_name    TYPE string,
 
       "! add a structure to given formatted context
-      "! @parameter i_current_context | current context as string
       "! @parameter i_structure       | given structure
       "! @parameter i_field_catalog   | field catalog of structure
       "! @parameter r_current_context | changed context with added structure data as string
       add_structure
-        IMPORTING i_current_context        TYPE string
-                  i_structure              TYPE any
+        IMPORTING i_structure              TYPE any
                   i_field_catalog          TYPE lvc_t_fcat
         RETURNING VALUE(r_current_context) TYPE string.
 
@@ -113,18 +111,19 @@ CLASS zcl_ddve_structure IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      current_context = COND #( WHEN field_info-datatype = 'TTYP' THEN add_itab(
-                                                                           i_current_context = current_context
-                                                                           i_table           = <field>
-                                                                           i_component_name  = field_info-fieldname )
-                                WHEN field_info-datatype = 'STRU' THEN handle_nested_structure(
-                                                                           i_current_context = current_context
-                                                                           i_structure       = <field>
-                                                                           i_component_info  = field_info   )
-                                ELSE                                   NEW zcl_ddve_component( )->add(
-                                                                               i_current_context = current_context
-                                                                               i_component       = <field>
-                                                                               i_component_info  = field_info  )  ).
+      current_context = COND #(
+          WHEN field_info-datatype = zcl_ddve_abap_typedescr=>table_type THEN
+            add_itab( i_current_context = current_context
+                      i_table           = <field>
+                      i_component_name  = field_info-fieldname )
+          WHEN field_info-datatype = zcl_ddve_abap_typedescr=>structure_type THEN
+            handle_nested_structure( i_current_context = current_context
+                                     i_structure       = <field>
+                                     i_component_info  = field_info   )
+          ELSE
+            NEW zcl_ddve_component( )->add( i_current_context = current_context
+                                            i_component       = <field>
+                                            i_component_info  = field_info  ) ).
 
     ENDLOOP.
 
@@ -145,8 +144,6 @@ CLASS zcl_ddve_structure IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD add_structure.
-    " TODO: parameter I_CURRENT_CONTEXT is never used (ABAP cleaner)
-
     r_current_context = right_hand_side( i_field_catalog = i_field_catalog
                                          i_structure     = i_structure ).
   ENDMETHOD.
@@ -181,18 +178,15 @@ CLASS zcl_ddve_structure IMPLEMENTATION.
                                                          i_field_catalog         = i_field_catalog   ).
   ENDMETHOD.
 
-  METHOD show_popup_w_content.
-    DATA(content_4_display) = prepare_output( i_struc_name    = i_struc_name
-                                              i_structure     = i_structure
-                                              i_field_catalog = i_field_catalog ).
-    TRY.
-        DATA(formated_content) = zcl_ddve_prettyprinter_factory=>create( )->format( content_4_display ).
-      CATCH cx_class_not_existent INTO DATA(cx_class_not_existent). " TODO: variable is assigned but never used (ABAP cleaner)
-        " formatting went wring, fallback using non formatted text
-        formated_content = content_4_display.
-    ENDTRY.
-    cl_demo_output=>set_mode( cl_demo_output=>text_mode ). " set to text mode to be more compatible with minus signs and so on
-    cl_demo_output=>write_data( formated_content ).
-    cl_demo_output=>display( ).
-  ENDMETHOD.
+METHOD show_popup_w_content.
+  DATA(content_4_display) = prepare_output( i_struc_name    = i_struc_name
+                                            i_structure     = i_structure
+                                            i_field_catalog = i_field_catalog ).
+  TRY.
+      DATA(formated_content) = zcl_ddve_prettyprinter_factory=>create( )->format( content_4_display ).
+    CATCH cx_class_not_existent INTO DATA(cx_class_not_existent).
+      formated_content = content_4_display.
+  ENDTRY.
+  NEW zcl_ddve_output_presenter( )->display_text( formated_content ).
+ENDMETHOD.
 ENDCLASS.

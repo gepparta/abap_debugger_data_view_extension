@@ -7,33 +7,40 @@ CLASS zcl_ddve_component DEFINITION
 
   PUBLIC SECTION.
     "! add a single component or already formatted context
-    "! @parameter i_datatype        | datatype of component
     "! @parameter i_current_context | current context as string
     "! @parameter i_component       | current component
     "! @parameter i_component_info  | field catalog info for this component
     "! @parameter r_current_context | changed context with added component data as string
     METHODS add
-      IMPORTING i_datatype               TYPE datatype_d OPTIONAL
-                i_current_context        TYPE string
+      IMPORTING i_current_context        TYPE string
                 i_component              TYPE any
                 i_component_info         TYPE lvc_s_fcat
       RETURNING VALUE(r_current_context) TYPE string.
 
   PRIVATE SECTION.
-    "! prepare component name
-    "! delete surrounding spaces
-    "!
-    "! @parameter i_component_name |
-    "! @parameter r_component_name |
     METHODS component_name IMPORTING i_component_name        TYPE string
                            RETURNING VALUE(r_component_name) TYPE string.
+
+    METHODS format_as_integer
+      IMPORTING i_component   TYPE any
+      RETURNING VALUE(r_text) TYPE string.
+
+    METHODS format_as_string
+      IMPORTING i_component   TYPE any
+      RETURNING VALUE(r_text) TYPE string.
+
+    METHODS format_as_char
+      IMPORTING i_component   TYPE any
+      RETURNING VALUE(r_text) TYPE string.
+
+    METHODS format_as_passthrough
+      IMPORTING i_component   TYPE any
+      RETURNING VALUE(r_text) TYPE string.
 ENDCLASS.
 
 
 CLASS zcl_ddve_component IMPLEMENTATION.
   METHOD add.
-    " TODO: parameter I_DATATYPE is never used (ABAP cleaner)
-
     r_current_context = i_current_context.
 
     CHECK i_component IS NOT INITIAL.
@@ -43,21 +50,15 @@ CLASS zcl_ddve_component IMPLEMENTATION.
                                                OR zcl_ddve_abap_typedescr=>typekind_int2
                                                OR zcl_ddve_abap_typedescr=>typekind_int
                                                OR zcl_ddve_abap_typedescr=>typekind_int8 THEN
-                                               condense( |{ i_component }| )
+                                               format_as_integer( i_component )
                                              WHEN zcl_ddve_abap_typedescr=>typekind_struct1
                                                OR zcl_ddve_abap_typedescr=>typekind_struct2
                                                OR zcl_ddve_abap_typedescr=>typekind_table THEN
-                                               i_component
+                                               format_as_passthrough( i_component )
                                              WHEN zcl_ddve_abap_typedescr=>typekind_string THEN
-                                               |`{ replace( val  = i_component
-                                                            sub  = |`|
-                                                            with = |``|
-                                                            occ  = 0 ) }`|
+                                               format_as_string( i_component )
                                              ELSE
-                                               |'{ replace( val  = i_component
-                                                            sub  = |'|
-                                                            with = |''|
-                                                            occ  = 0 ) }'| ).
+                                               format_as_char( i_component ) ).
 
     IF i_component_info-fieldname IS NOT INITIAL.
 
@@ -67,7 +68,7 @@ CLASS zcl_ddve_component IMPLEMENTATION.
                                           ELSE i_component_info-fieldname ).
 
       DATA(new_column_value_combi) = | { me->component_name( component_name )
-                                       }{ COND #( WHEN i_component_info-datatype <> |STRU| THEN | = | )
+                                       }{ COND #( WHEN i_component_info-datatype <> zcl_ddve_abap_typedescr=>structure_type THEN | = | )
                                        }{ assign_component_value }|.
 
       r_current_context = |{ i_current_context }{ new_column_value_combi }|.
@@ -85,5 +86,27 @@ CLASS zcl_ddve_component IMPLEMENTATION.
     r_component_name = condense( val  = r_component_name
                                  from = ` `
                                  to   = `` ).
+  ENDMETHOD.
+
+  METHOD format_as_integer.
+    r_text = condense( |{ i_component }| ).
+  ENDMETHOD.
+
+  METHOD format_as_string.
+    r_text = |`{ replace( val  = i_component
+                          sub  = |`|
+                          with = |``|
+                          occ  = 0 ) }`|.
+  ENDMETHOD.
+
+  METHOD format_as_char.
+    r_text = |'{ replace( val  = i_component
+                          sub  = |'|
+                          with = |''|
+                          occ  = 0 ) }'|.
+  ENDMETHOD.
+
+  METHOD format_as_passthrough.
+    r_text = i_component.
   ENDMETHOD.
 ENDCLASS.

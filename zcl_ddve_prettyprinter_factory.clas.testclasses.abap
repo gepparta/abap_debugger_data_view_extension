@@ -25,18 +25,17 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD create_standard_pretty_printer.
-    " GIVEN
-    zcl_ddve_prettyprinter_factory=>user_class_customizing = VALUE #(
-        ( user_name = |AGEPPART|  class_name = |ZCL_DDVE_VALUE_PRETTY_PRINTER| ) ).
+    " GIVEN - reset singleton and inject customizing for current user
+    zcl_ddve_prettyprinter_factory=>pretty_printer = VALUE #( ).
+    zcl_ddve_pret_printer_injector=>inject_user_class_customizing( VALUE #(
+        ( user_name = sy-uname  class_name = |ZCL_DDVE_VALUE_PRETTY_PRINTER| ) ) ).
 
     " WHEN
     FINAL(pretty_printer) = zcl_ddve_prettyprinter_factory=>create( ).
 
     " THEN
     TRY.
-        " TODO: variable is assigned but never used (ABAP cleaner)
         FINAL(must_be_pretty_printer) = CAST zcl_ddve_value_pretty_printer( pretty_printer ).
-
       CATCH cx_sy_move_cast_error INTO FINAL(error).
         cl_abap_unit_assert=>fail(
             msg = |Standard class ZCL_DDVE_VALUE_PRETTY_PRINTER was not used in factory but should have been. Error is { error->get_longtext( ) }| ).

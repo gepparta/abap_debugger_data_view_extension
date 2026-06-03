@@ -8,7 +8,7 @@ CLASS zcl_ddve_pret_printer_injector DEFINITION
     CLASS-METHODS:
       inject_pretty_printer         IMPORTING i_pretty_printer         TYPE REF TO zif_ddve_value_pretty_printer,
       inject_class_names            IMPORTING i_class_names            TYPE string_table,
-      inject_user_class_customizing IMPORTING i_user_class_customizing TYPE zcl_ddve_prettyprinter_factory=>tt_dve_cust.
+      inject_user_class_customizing IMPORTING i_user_class_customizing TYPE zcl_ddve_pp_customizing=>tt_dve_cust.
 ENDCLASS.
 
 
@@ -22,6 +22,6 @@ CLASS zcl_ddve_pret_printer_injector IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD inject_user_class_customizing.
-    zcl_ddve_prettyprinter_factory=>user_class_customizing = i_user_class_customizing.
+    zcl_ddve_pp_customizing=>customizing = i_user_class_customizing.
   ENDMETHOD.
 ENDCLASS.
