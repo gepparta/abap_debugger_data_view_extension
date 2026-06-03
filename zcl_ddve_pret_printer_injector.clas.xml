@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_OP_ABAP_TYPEDESCR</CLSNAME>
+    <CLSNAME>ZCL_DDVE_PRET_PRINTER_INJECTOR</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Custom Copy of CL_ABAP_TYPEDESCR Types</DESCRIPT>
+    <DESCRIPT>ABAP Debugger Enhancement - Injector for Pretty Printer</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

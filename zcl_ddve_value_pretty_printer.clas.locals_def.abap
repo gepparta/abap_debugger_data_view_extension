@@ -2,8 +2,9 @@
 *"* definitions, interfaces or type declarations) you need for
 *"* components in the private section
 
-class lcx_no_match definition INHERITING FROM cx_static_check.
-endclass.
+CLASS lcx_no_match DEFINITION INHERITING FROM cx_static_check.
+ENDCLASS.
 
-class lcx_parser_interrupt definition INHERITING FROM cx_no_check.
-endclass.
+
+CLASS lcx_parser_interrupt DEFINITION INHERITING FROM cx_no_check.
+ENDCLASS.

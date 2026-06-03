@@ -1,5 +1,5 @@
 CLASS ltc_struc_enh_should_process DEFINITION DEFERRED.
-CLASS zcl_op_structure DEFINITION LOCAL FRIENDS ltc_struc_enh_should_process.
+CLASS zcl_ddve_structure DEFINITION LOCAL FRIENDS ltc_struc_enh_should_process.
 
 CLASS ltc_struc_enh_should_process DEFINITION FOR TESTING DURATION SHORT  RISK LEVEL HARMLESS.
 
@@ -46,8 +46,8 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
                                          seatsmax_f =  21         seatsocc_f =  21  ).
 
 
-    DATA(content) = NEW zcl_op_structure( )->prepare_output( i_structure          = structure
-                                                             i_field_catalog      = NEW zcl_op_simple_field_catalog( )->get_by_data( i_structure = structure )
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output( i_structure          = structure
+                                                             i_field_catalog      = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = structure )
                                                              i_struc_name         = |STRUCTURE|  ).
 
 
@@ -76,8 +76,8 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
     DATA(content_expected) = |NESTED_STRUCTURE = VALUE #( COL1 = 1 COL2 = VALUE #( COL1 = 1 COL2 = 2 ) ).|.
 
 
-    DATA(content) = NEW zcl_op_structure( )->prepare_output( i_structure          = nested_structure
-                                                             i_field_catalog      = NEW zcl_op_simple_field_catalog( )->get_by_data( i_structure = nested_structure )
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output( i_structure          = nested_structure
+                                                             i_field_catalog      = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = nested_structure )
                                                              i_struc_name         = |NESTED_STRUCTURE|  ).
 
     cl_abap_unit_assert=>assert_equals( act   = content
@@ -113,8 +113,8 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
 
     DATA(content_expected) = |MIXED_STRUCTURE = VALUE #( COL1 = 1 COL2 = VALUE #( COL1 = 1 COL2 = 2 ) COL3 = 3 COL4 = VALUE #( COL1 = 1 COL2 = 2 ) ).|.
 
-    DATA(content) = NEW zcl_op_structure( )->prepare_output(  i_structure          = mixed_structure
-                                                              i_field_catalog      = NEW zcl_op_simple_field_catalog( )->get_by_data( i_structure = mixed_structure )
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output(  i_structure          = mixed_structure
+                                                              i_field_catalog      = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = mixed_structure )
                                                               i_struc_name         = |MIXED_STRUCTURE|  ).
 
     cl_abap_unit_assert=>assert_equals( act   =  content
@@ -156,8 +156,8 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
     DATA(content_expected) = |ITAB_IN_STRUCTURE = VALUE #( COL1 = 1 COL2 = VALUE #( COL1 = 11 COL2 = 22 ) COL3 = VALUE #(| &&
                              | ( COL1 = 311 COL2 = VALUE #( COL1 = 3121 COL2 = 3122 ) ) ( COL1 = 321 COL2 = VALUE #( COL1 = 3221 COL2 = 3222 ) ) ) ).|.
 
-    DATA(content) = NEW zcl_op_structure( )->prepare_output(    i_structure          = itab_in_struc
-                                                                i_field_catalog      = NEW zcl_op_simple_field_catalog( )->get_by_data( i_structure = itab_in_struc )
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output(    i_structure          = itab_in_struc
+                                                                i_field_catalog      = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = itab_in_struc )
                                                                 i_struc_name         = |ITAB_IN_STRUCTURE|  ).
     cl_abap_unit_assert=>assert_equals( act   =  content
                                         exp   =  content_expected
@@ -176,8 +176,8 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
 
     DATA(content_expected) = |INCLUDE_IN_STRUCTURE = VALUE #( MANDT = '100' MTEXT = 'someText' DUMMY_FIELD_1 = 5 DUMMY_FIELD_2 = `someOtherText` ).|.
 
-    DATA(content) = NEW zcl_op_structure( )->prepare_output(    i_structure          = include_in_structure
-                                                                i_field_catalog      = NEW zcl_op_simple_field_catalog( )->get_by_data( i_structure = include_in_structure )
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output(    i_structure          = include_in_structure
+                                                                i_field_catalog      = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = include_in_structure )
                                                                 i_struc_name         = |INCLUDE_IN_STRUCTURE|  ).
     cl_abap_unit_assert=>assert_equals( act   =  content
                                         exp   =  content_expected
@@ -189,7 +189,7 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
 ENDCLASS.
 
 CLASS ltc_struc_enh_should_not DEFINITION DEFERRED.
-CLASS zcl_op_structure DEFINITION LOCAL FRIENDS ltc_struc_enh_should_not.
+CLASS zcl_ddve_structure DEFINITION LOCAL FRIENDS ltc_struc_enh_should_not.
 CLASS ltc_struc_enh_should_not DEFINITION FOR TESTING
   DURATION SHORT
   RISK LEVEL HARMLESS.
@@ -256,8 +256,8 @@ CLASS ltc_struc_enh_should_not IMPLEMENTATION.
                              |= VALUE #( COL1 = 1 COL2 = 2 ) CLIENT_ORDER_ID = 1 WAREHOUSE_ID = 2 ) ) ) ) ) ).|.
 
 
-    DATA(content) = NEW zcl_op_structure( )->prepare_output( i_structure          = nested_structure
-                                                             i_field_catalog      = NEW zcl_op_simple_field_catalog( )->get_by_data( i_structure = nested_structure )
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output( i_structure          = nested_structure
+                                                             i_field_catalog      = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = nested_structure )
                                                              i_struc_name         = |NESTED_STRUCTURE|  ).
 
     cl_abap_unit_assert=>assert_equals( act   = content

@@ -1,12 +1,12 @@
 CLASS ltc_table_enh_should DEFINITION DEFERRED.
-CLASS zcl_op_table   DEFINITION LOCAL FRIENDS ltc_table_enh_should.
+CLASS zcl_ddve_table   DEFINITION LOCAL FRIENDS ltc_table_enh_should.
 
 CLASS ltc_table_enh_should DEFINITION FOR TESTING
   DURATION SHORT  RISK LEVEL HARMLESS.
 
   PRIVATE SECTION.
     DATA:
-      table_view TYPE REF TO zcl_op_table.  "class under test
+      table_view TYPE REF TO zcl_ddve_table.  "class under test
 
     METHODS:
       setup,
@@ -23,7 +23,7 @@ ENDCLASS.
 CLASS ltc_table_enh_should IMPLEMENTATION.
 
   METHOD setup.
-    table_view = NEW zcl_op_table( ).
+    table_view = NEW zcl_ddve_table( ).
   ENDMETHOD.
 
 
@@ -143,48 +143,45 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD st05_main_record_table.
-
     DATA(lv_date) = sy-datum.
     DATA(lv_time) = sy-uzeit.
 
-    DATA(table) = VALUE st05_main_record_table(
-      ( date                           = lv_date
-        time                           = lv_time
-        duration                       = '10.5'
-        number_of_rows                 = '11.5'
-        object                         = 'OBJECT'
-        statement_with_values          = `STATEMENT_WITH_VALUES`
-        array_size                     = 12
-        transaction                    = 'TRANSACTION'
-        program                        = 'PROGRAM'
-        db_connection_name             = 'DB_CONNECTION_NAME'
-        db_connection_id               = 'DB_CON_ID'
-        operation                      = 'OPERATI'
-        return_code                    = 13
-        wp_id                          = '001'
-        wp_type                        = 'DIA'
-        user_name                      = 'USER_NAME'
-        client                         = '100'
-        trans_id                       = 'TRANS_ID'
-        epp_root_id                    = 'EPP_ROOT_ID'
-        epp_connection_id              = 'EPP_CONNECTION_ID'
-        epp_connection_counter         = 14
-        record_number                  = 15
-        record_numbers                 = VALUE #( ( 16 ) ( 17 ) )
-        offset                         = 18
-        statement_with_names           = `STATEMENT_WITH_NAMES`
-        length_of_statement_with_names = 19
-        variables                      = `VARIABLES`
-        number_of_variables            = 20
-        trace_type                     = 'TRAC'
-        line_color                     = 'LINE'
-    ) ).
+    DATA(table) = VALUE st05_main_record_table( ( date                           = lv_date
+                                                  time                           = lv_time
+                                                  duration                       = '10.5'
+                                                  number_of_rows                 = '11.5'
+                                                  object                         = 'OBJECT'
+                                                  statement_with_values          = `STATEMENT_WITH_VALUES`
+                                                  array_size                     = 12
+                                                  transaction                    = 'TRANSACTION'
+                                                  program                        = 'PROGRAM'
+                                                  db_connection_name             = 'DB_CONNECTION_NAME'
+                                                  db_connection_id               = 'DB_CON_ID'
+                                                  operation                      = 'OPERATI'
+                                                  return_code                    = 13
+                                                  wp_id                          = '001'
+                                                  wp_type                        = 'DIA'
+                                                  user_name                      = 'USER_NAME'
+                                                  client                         = '100'
+                                                  trans_id                       = 'TRANS_ID'
+                                                  epp_root_id                    = 'EPP_ROOT_ID'
+                                                  epp_connection_id              = 'EPP_CONNECTION_ID'
+                                                  epp_connection_counter         = 14
+                                                  record_number                  = 15
+                                                  record_numbers                 = VALUE #( ( 16 ) ( 17 ) )
+                                                  offset                         = 18
+                                                  statement_with_names           = `STATEMENT_WITH_NAMES`
+                                                  length_of_statement_with_names = 19
+                                                  variables                      = `VARIABLES`
+                                                  number_of_variables            = 20
+                                                  trace_type                     = 'TRAC'
+                                                  line_color                     = 'LINE' ) ).
 
     DATA(output) = table_view->prepare_output( i_table       = table
                                                i_table_title = 'TABLE' ).
 
     DATA(output_exp) = |TABLE = VALUE #( ( DATE = '{ lv_date }' TIME = '{ lv_time }' DURATION = '11 ' NUMBER_OF_ROWS = 12 |
-                        && |OBJECT = 'OBJECT' STATEMENT_WITH_VALUES = `STATEMENT_WITH_VALUES` |
+                        && |OBJECT = `OBJECT` STATEMENT_WITH_VALUES = `STATEMENT_WITH_VALUES` |
                         && |ARRAY_SIZE = 12 TRANSACTION = 'TRANSACTION' PROGRAM = 'PROGRAM' DB_CONNECTION_NAME = |
                         && |'DB_CONNECTION_NAME' DB_CONNECTION_ID = 'DB_CON_ID' OPERATION = 'OPERATI' RETURN_CODE |
                         && |= 13 WP_ID = '001' WP_TYPE = 'DIA' USER_NAME = 'USER_NAME' CLIENT = '100' TRANS_ID = |
@@ -192,9 +189,8 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
                         && |EPP_CONNECTION_COUNTER = 14 RECORD_NUMBER = 15 RECORD_NUMBERS = VALUE #( ( 16 ) |
                         && |( 17 ) ) OFFSET = 18 STATEMENT_WITH_NAMES = `STATEMENT_WITH_NAMES` LENGTH_OF_STATEMENT_WITH_NAMES |
                         && |= 19 VARIABLES = `VARIABLES` NUMBER_OF_VARIABLES = 20 TRACE_TYPE = 'TRAC' LINE_COLOR = 'LINE' ) ).|.
-    cl_abap_unit_assert=>assert_equals( EXPORTING  act = output
-                                                   exp = output_exp ).
-
+    cl_abap_unit_assert=>assert_equals( exp = output_exp
+                                        act = output ).
   ENDMETHOD.
 
 

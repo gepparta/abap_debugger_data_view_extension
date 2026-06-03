@@ -1,13 +1,14 @@
 *"* use this source file for your ABAP unit test classes
 CLASS ltcl_pretty_printer_should DEFINITION DEFERRED.
 CLASS ltcl_pretty_printer_performanc DEFINITION DEFERRED.
-CLASS zcl_op_value_pretty_printer DEFINITION LOCAL FRIENDS ltcl_pretty_printer_should ltcl_pretty_printer_performanc.
+CLASS ltcl_format_edge_cases DEFINITION DEFERRED.
+CLASS zcl_ddve_value_pretty_printer DEFINITION LOCAL FRIENDS ltcl_pretty_printer_should ltcl_pretty_printer_performanc ltcl_format_edge_cases.
 CLASS ltcl_pretty_printer_should DEFINITION FINAL FOR TESTING
   DURATION SHORT
   RISK LEVEL HARMLESS.
 
   PRIVATE SECTION.
-    DATA: cut TYPE REF TO zcl_op_value_pretty_printer.
+    DATA: cut TYPE REF TO zcl_ddve_value_pretty_printer.
     METHODS:
       setup,
       add_indent FOR TESTING RAISING cx_static_check,
@@ -25,12 +26,30 @@ CLASS ltcl_pretty_printer_performanc DEFINITION FINAL FOR TESTING
       string_literal FOR TESTING RAISING cx_static_check.
 ENDCLASS.
 
+CLASS ltcl_format_edge_cases DEFINITION FINAL FOR TESTING
+  DURATION SHORT
+  RISK LEVEL HARMLESS.
+
+  PRIVATE SECTION.
+    DATA cut TYPE REF TO zcl_ddve_value_pretty_printer.
+
+    METHODS:
+      setup,
+      format_empty_input          FOR TESTING RAISING cx_static_check,
+      format_unparseable_input    FOR TESTING RAISING cx_static_check,
+      format_number_rhs           FOR TESTING RAISING cx_static_check,
+      format_text_literal_rhs     FOR TESTING RAISING cx_static_check,
+      format_string_literal_rhs   FOR TESTING RAISING cx_static_check,
+      format_empty_value_operator FOR TESTING RAISING cx_static_check,
+      format_apostroph_in_literal FOR TESTING RAISING cx_static_check.
+ENDCLASS.
+
 
 CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD setup.
     "as we are here in a private unit test class of zcl_op_value_pretty_printer we don't need to use the factory or injector for instantiating
-    cut = NEW zcl_op_value_pretty_printer( ).
+    cut = NEW zcl_ddve_value_pretty_printer( ).
   ENDMETHOD.
 
   METHOD add_indent.
@@ -134,7 +153,7 @@ ENDCLASS.
 
 CLASS ltcl_pretty_printer_performanc IMPLEMENTATION.
 
-  METHOD string_literal.
+METHOD string_literal.
 
     DATA input TYPE string.
     DATA occ TYPE i VALUE 100.
@@ -178,7 +197,7 @@ CLASS ltcl_pretty_printer_performanc IMPLEMENTATION.
 
     "THEN the pretty-printing should last not too long!
 
-    DATA(formated_string) = NEW zcl_op_value_pretty_printer( )->format( input ).
+    DATA(formated_string) = NEW zcl_ddve_value_pretty_printer( )->format( input ).
 
     DATA(exp) = |MAIN_RECORD_TABLE = VALUE #(\n|
         && repeat( occ = occ val = |         (\n| &
@@ -425,6 +444,75 @@ CLASS ltcl_pretty_printer_performanc IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( act = formated_string exp = exp ).
 
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS ltcl_format_edge_cases IMPLEMENTATION.
+
+  METHOD setup.
+    cut = NEW zcl_ddve_value_pretty_printer( ).
+  ENDMETHOD.
+
+  METHOD format_empty_input.
+    DATA(input) = ``.
+    DATA(result) = cut->format( input ).
+    cl_abap_unit_assert=>assert_initial(
+      act = result
+      msg = `Empty input must produce empty output (trace_tab stays empty)` ).
+  ENDMETHOD.
+
+  METHOD format_unparseable_input.
+    DATA(input) = `garbage without value operator`.
+    DATA(result) = cut->format( input ).
+    cl_abap_unit_assert=>assert_initial(
+      act = result
+      msg = `Unparseable input must produce empty output` ).
+  ENDMETHOD.
+
+  METHOD format_number_rhs.
+    DATA(input) = |MY_VAR = 42.|.
+    DATA(result) = cut->format( input ).
+    cl_abap_unit_assert=>assert_equals(
+      exp = |MY_VAR = 42.|
+      act = result
+      msg = `Number RHS must be preserved as single line` ).
+  ENDMETHOD.
+
+  METHOD format_text_literal_rhs.
+    DATA(input) = |MY_VAR = 'abc'.|.
+    DATA(result) = cut->format( input ).
+    cl_abap_unit_assert=>assert_equals(
+      exp = |MY_VAR = 'abc'.|
+      act = result
+      msg = `Text literal RHS must be preserved as single line` ).
+  ENDMETHOD.
+
+  METHOD format_string_literal_rhs.
+    DATA(input) = `MY_VAR = ``abc``.`.
+    DATA(result) = cut->format( input ).
+    cl_abap_unit_assert=>assert_equals(
+      exp = input
+      act = result
+      msg = `String literal (backticks) RHS must be preserved` ).
+  ENDMETHOD.
+
+  METHOD format_empty_value_operator.
+    DATA(input) = |MY_VAR = VALUE #( ).|.
+    DATA(result) = cut->format( input ).
+    cl_abap_unit_assert=>assert_equals(
+      exp = |MY_VAR = VALUE #( ).|
+      act = result
+      msg = `Empty VALUE #( ) must stay on a single line` ).
+  ENDMETHOD.
+
+  METHOD format_apostroph_in_literal.
+    DATA(input) = |MY_VAR = 'it''s'.|.
+    DATA(result) = cut->format( input ).
+    cl_abap_unit_assert=>assert_equals(
+      exp = |MY_VAR = 'it''s'.|
+      act = result
+      msg = `Apostroph escape in text literal must be preserved verbatim` ).
   ENDMETHOD.
 
 ENDCLASS.

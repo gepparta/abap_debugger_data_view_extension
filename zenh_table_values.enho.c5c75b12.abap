@@ -3,7 +3,7 @@ ENHANCEMENT 0 ZENH_TABLE_VALUES.
   CASE e_ucomm.
     WHEN 'ZDATA_4_ABAP_VIEW'. "user klicked on Button to display ABAP friendly table data
       FIELD-SYMBOLS: <zz_table> TYPE ANY TABLE.
-      zcl_op_debugger_integration=>debug_debugger_if_needed( ).
+      zcl_ddve_debugger_integration=>debug_debugger_if_needed( ).
       TRY.
           ref_alv->get_frontend_fieldcatalog( IMPORTING et_fieldcatalog = DATA(zz_field_catalog) ).
           " field INDEX does not actually exist in table and is not useful in VALUE statement

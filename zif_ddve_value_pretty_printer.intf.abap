@@ -1,5 +1,5 @@
 "! Interface for pretty printing a value #() construct
-INTERFACE zif_op_value_pretty_printer
+INTERFACE zif_ddve_value_pretty_printer
   PUBLIC .
 
   METHODS:

@@ -3,7 +3,7 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOINTERF>
-    <CLSNAME>ZIF_OP_VALUE_PRETTY_PRINTER</CLSNAME>
+    <CLSNAME>ZIF_DDVE_VALUE_PRETTY_PRINTER</CLSNAME>
     <LANGU>E</LANGU>
     <DESCRIPT>Interface Value Contructor Pretty Printer</DESCRIPT>
     <EXPOSURE>2</EXPOSURE>
