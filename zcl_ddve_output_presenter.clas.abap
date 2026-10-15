@@ -12,7 +12,7 @@ ENDCLASS.
 CLASS zcl_ddve_output_presenter IMPLEMENTATION.
   METHOD display_text.
     cl_demo_output=>set_mode( cl_demo_output=>text_mode ).
-    cl_demo_output=>write_data( i_content ).
+    cl_demo_output=>write_text( i_content ).
     cl_demo_output=>display( ).
   ENDMETHOD.
 ENDCLASS.

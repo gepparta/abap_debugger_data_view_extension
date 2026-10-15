@@ -38,7 +38,7 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
            BEGIN OF ENUM enum_sub_terminal STRUCTURE c_sub_terminal,
              na,                " not applicable
              assign_operator,   " =
-             value_operator,    " VALUE #(
+             value_operator,    " VALUE #( or VALUE typename(
              parenthesis_open,  " (
              parenthesis_close, " )
              empty_line,        " ( )
@@ -61,17 +61,21 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
            END OF ty_sync_point.
 
     CONSTANTS: c_newline              TYPE abap_char1 VALUE cl_abap_char_utilities=>cr_lf,
-               c_regex_lhs            TYPE string     VALUE `[A-Z][A-Z0-9_/\-\[\]\>]+` ##NO_TEXT,
+               " LHS: plain symbol name, inline declaration DATA(name) or field symbol <name>
+               c_regex_lhs            TYPE string     VALUE `(DATA\([A-Z][A-Z0-9_/]*\)|<[A-Z][A-Z0-9_/]*>|[A-Z][A-Z0-9_/\-\[\]\>]+)` ##NO_TEXT,
+               " VALUE operator: untyped # or a type expression like SFLIGHT / ZCL_X=>TY_Y
+               c_regex_value_operator TYPE string     VALUE `VALUE [#A-Z/][A-Z0-9_/=>]*\(` ##NO_TEXT,
                c_regex_number         TYPE string     VALUE `[0-9]+` ##NO_TEXT,
                c_regex_text_literal   TYPE string     VALUE `'(?:''|[^'])+'` ##NO_TEXT,
                c_regex_string_literal TYPE string     VALUE '`(?:``|[^`])+`' ##NO_TEXT.
 
-    DATA: steering    TYPE tt_char_offset,
-          offset      TYPE i,
-          text        TYPE string,
-          trace_tab   TYPE TABLE OF ty_trace
+    DATA: steering      TYPE tt_char_offset,
+          offset        TYPE i,
+          text          TYPE string,
+          trace_tab     TYPE TABLE OF ty_trace
                         WITH NON-UNIQUE SORTED KEY k1 COMPONENTS parent_sync_point terminal offset,
-          sync_points TYPE TABLE OF ty_sync_point.
+          sync_points   TYPE TABLE OF ty_sync_point,
+          error_occured TYPE abap_bool.
 
     METHODS: "! <p class="shorttext synchronized" lang="en">assign tries to build this: LHS = RHS</p>
       "!
@@ -81,11 +85,11 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
       "! <p class="shorttext synchronized" lang="en">RHS could be : number | text | string | empty | struct | table</p>
       "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
       rhs                      RAISING lcx_no_match,
-      "! <p class="shorttext synchronized" lang="en">empty : 'VALUE #( )'</p>
+      "! <p class="shorttext synchronized" lang="en">empty : 'VALUE #|typ( )'</p>
       "!
       "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
       add_empty_value_operator RAISING lcx_no_match,
-      "! <p class="shorttext synchronized" lang="en">struct : 'VALUE #(' struct2 ')'</p>
+      "! <p class="shorttext synchronized" lang="en">struct : 'VALUE #|typ(' struct2 ')'</p>
       "!
       "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
       add_structure_rhs        RAISING lcx_no_match,
@@ -93,7 +97,7 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
       "!
       "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
       add_structure_content    RAISING lcx_no_match,
-      "! <p class="shorttext synchronized" lang="en">table : 'VALUE #(' ( '( )' | ( '(' inner_rhs ')' )+ ) ')'</p>
+      "! <p class="shorttext synchronized" lang="en">table : 'VALUE #|typ(' ( '( )' | ( '(' inner_rhs ')' )+ ) ')'</p>
       "!
       "! @raising lcx_no_match | <p class="shorttext synchronized" lang="en"></p>
       add_table                RAISING lcx_no_match,
@@ -147,7 +151,6 @@ ENDCLASS.
 
 
 CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
-
   METHOD assign.
     " assign tries to build this: LHS = RHS
     TRY.
@@ -196,19 +199,19 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD add_empty_value_operator.
-    " empty : 'VALUE #( )'
+    " empty : 'VALUE #|typ( )'
     TRY.
         find_spaces( ).
         FINAL(current_sync_point_index) = set_sync_point( c_terminal-empty ).
-        set_offset_for_regex( `VALUE #\( \)` ).
+        set_offset_for_regex( c_regex_value_operator && ` \)` ).
         add_to_trace( ).
       CLEANUP.
         reset_to_sync_point( current_sync_point_index ).
-    ENDTRY.
+      ENDTRY.
   ENDMETHOD.
 
   METHOD add_structure_rhs.
-    " struct : 'VALUE #(' struct2 ')'
+    " struct : 'VALUE #|typ(' struct2 ')'
     TRY.
         find_spaces( ).
         FINAL(current_sync_point_index) = set_sync_point( c_terminal-struct ).
@@ -255,7 +258,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD add_table.
-    " table : 'VALUE #(' ( '( )' | ( '(' inner_rhs ')' )+ ) ')'
+    " table : 'VALUE #|typ(' ( '( )' | ( '(' inner_rhs ')' )+ ) ')'
     TRY.
         find_spaces( ).
         FINAL(outer_sync_point) = set_sync_point( c_terminal-table ).
@@ -328,6 +331,8 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
         " TABLE[1]-COMPONENT
         " VAR_2
         " /NAMESPACE/VARIABLE
+        " DATA(VARIABLE) as inline declaration
+        " <FIELD_SYMBOL>
         " something like "CUT->ST03N_TRANSACTION_PROFILE" could also be a lhs
 
         set_offset_for_regex( c_regex_lhs ).
@@ -421,6 +426,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
         assign( ).
       CATCH lcx_parser_interrupt
             lcx_no_match INTO FINAL(lx_error) ##NEEDED.
+        error_occured = abap_true.
         zcl_ddve_debugger_integration=>debug_debugger_if_needed( ).
     ENDTRY.
   ENDMETHOD.
@@ -467,23 +473,27 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     "
     " RHS : number | text | string | empty | struct | table
     "
-    " empty : 'VALUE #( )'
+    " empty : 'VALUE #|typ( )'
     "
-    " add_structure_rhs : 'VALUE #(' struct2 ')'
+    " add_structure_rhs : 'VALUE #|typ(' struct2 ')'
     "
     " add_structure_content : ( LHS (left hand side) '=' RHS (right hand side) )+
     "
-    " table : 'VALUE #(' ( '( )' | struct2 ( '(' RHS2 ')' )+ | ( '(' RHS ')' )+ ')'
+    " table : 'VALUE #|typ(' ( '( )' | struct2 ( '(' RHS2 ')' )+ | ( '(' RHS ')' )+ ')'
     "
     " RHS2 : number | text | string | empty | struct2
     "
-    " LHS : ^[A-Z][A-Z0-9_\-]+
+    " LHS : DATA(NAME) | <NAME> | ^[A-Z][A-Z0-9_\-]+
     "
     " number : ^[0-9]+
     "
     " text : ^'(?:''|[^'])+'
     parse( i_unformated_value_content ).
     r_formated_content = render( i_unformated_value_content ).
+
+    IF error_occured = abap_true.
+      r_formated_content = i_unformated_value_content.
+    ENDIF.
   ENDMETHOD.
 
   METHOD add_to_trace.
@@ -530,7 +540,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
 
   METHOD add_value_open_operator.
     non_terminal( i_sub_terminal = c_sub_terminal-value_operator
-                  i_regex        = `VALUE #\(` ).
+                  i_regex        = c_regex_value_operator ).
   ENDMETHOD.
 
   METHOD add_parenthesis_close.

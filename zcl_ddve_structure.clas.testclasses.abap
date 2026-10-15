@@ -9,7 +9,9 @@ CLASS ltc_struc_enh_should_process DEFINITION FOR TESTING DURATION SHORT  RISK L
       nested_structure FOR TESTING,
       mixed_structure  FOR TESTING,
       itab_in_structure FOR TESTING,
-      include_in_structure FOR TESTING.
+      include_in_structure FOR TESTING,
+      typed_structure FOR TESTING,
+      fallback_on_invalid_name FOR TESTING.
 ENDCLASS.       "ltc_aunit_debugger_struc_enh
 
 
@@ -184,6 +186,48 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
                                         msg   = |include in structure was not formated as expected| ).
 
 
+  ENDMETHOD.
+
+  METHOD typed_structure.
+    TYPES: BEGIN OF t_pair,
+             col1 TYPE i,
+             col2 TYPE i,
+           END OF t_pair.
+
+    DATA(pair) = VALUE t_pair( col1 = 1
+                               col2 = 2 ).
+
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output(
+                        i_structure     = pair
+                        i_field_catalog = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = pair )
+                        i_struc_name    = |PAIR|
+                        i_type_name     = |ZCL_ORDER=>TY_PAIR| ).
+
+    cl_abap_unit_assert=>assert_equals( act = content
+                                        exp = |DATA(PAIR) = VALUE ZCL_ORDER=>TY_PAIR( COL1 = 1 COL2 = 2 ).|
+                                        msg = 'Typed structure statement was not built correctly' ).
+  ENDMETHOD.
+
+  METHOD fallback_on_invalid_name.
+    TYPES: BEGIN OF t_pair,
+             col1 TYPE i,
+             col2 TYPE i,
+           END OF t_pair.
+
+    DATA(pair) = VALUE t_pair( col1 = 1
+                               col2 = 2 ).
+
+    " a component path is no valid variable name for DATA( ) - despite a given
+    " type the classic untyped form must be generated
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output(
+                        i_structure     = pair
+                        i_field_catalog = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = pair )
+                        i_struc_name    = |LS_FLIGHT-PRICE|
+                        i_type_name     = |T_PAIR| ).
+
+    cl_abap_unit_assert=>assert_equals( act = content
+                                        exp = |LS_FLIGHT-PRICE = VALUE #( COL1 = 1 COL2 = 2 ).|
+                                        msg = 'Invalid variable name must fall back to the untyped form' ).
   ENDMETHOD.
 
 ENDCLASS.

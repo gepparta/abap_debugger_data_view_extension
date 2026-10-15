@@ -5,7 +5,9 @@ CLASS zcl_ddve_table DEFINITION
   CREATE PUBLIC.
 
   PUBLIC SECTION.
-    METHODS: handle_toolbar_set
+    METHODS: constructor,
+
+      handle_toolbar_set
       FOR EVENT toolbar OF cl_gui_alv_grid
       IMPORTING e_object
                 e_interactive,
@@ -15,6 +17,7 @@ CLASS zcl_ddve_table DEFINITION
                   i_fieldcatalog TYPE lvc_t_fcat OPTIONAL
                   i_table_title  TYPE string,
 
+      "! kept for compatibility: delegates to ZCL_DDVE_VALUE_RENDERER->RENDER_ITAB
       add_itab
         IMPORTING i_table_title            TYPE string     OPTIONAL
                   i_current_context        TYPE string
@@ -22,6 +25,7 @@ CLASS zcl_ddve_table DEFINITION
                   i_component_name         TYPE lvc_fname  OPTIONAL
                   i_fieldcatalog           TYPE lvc_t_fcat OPTIONAL
                   i_dont_add_a_point       TYPE boole_d    OPTIONAL
+                  i_type_name              TYPE string     OPTIONAL
         RETURNING VALUE(r_current_context) TYPE string,
 
       filter_table_from_alv
@@ -30,103 +34,32 @@ CLASS zcl_ddve_table DEFINITION
         RETURNING VALUE(result) TYPE REF TO data.
 
   PRIVATE SECTION.
+    DATA renderer TYPE REF TO zcl_ddve_value_renderer.
+
     METHODS:
       prepare_output
         IMPORTING i_fieldcatalog             TYPE lvc_t_fcat OPTIONAL
                   i_table                    TYPE ANY TABLE
                   i_table_title              TYPE string
                   i_dont_add_a_point         TYPE boole_d    OPTIONAL
-        RETURNING VALUE(r_content_4_display) TYPE string,
-
-      add_prefix
-        IMPORTING i_tabix                  TYPE i
-                  i_current_context        TYPE string
-                  i_table_title            TYPE string    OPTIONAL
-                  i_component_name         TYPE lvc_fname OPTIONAL
-        RETURNING VALUE(r_current_context) TYPE string.
+                  i_type_name                TYPE string     OPTIONAL
+        RETURNING VALUE(r_content_4_display) TYPE string.
 ENDCLASS.
 
 
 CLASS zcl_ddve_table IMPLEMENTATION.
-METHOD add_itab.
-    DATA table_line_context TYPE string.
-
-    TRY.
-
-        DATA(simple_field_catalog) = NEW zcl_ddve_simple_field_catalog( ).
-        DATA(field_catalog) = COND lvc_t_fcat( WHEN i_fieldcatalog[] IS NOT INITIAL
-                                               THEN i_fieldcatalog
-                                               ELSE simple_field_catalog->get_by_data(
-i_table = i_table  ) ).
-
-        DATA(structure) = NEW zcl_ddve_structure( ).
-        DATA(component) = NEW zcl_ddve_component( ).
-
-        r_current_context = COND string( WHEN i_current_context IS NOT INITIAL THEN i_current_context ELSE || ).
-
-        DATA(line_num) = 0.
-        LOOP AT i_table ASSIGNING FIELD-SYMBOL(<table_line>).
-
-          line_num = line_num + 1.
-          r_current_context = add_prefix( i_current_context = r_current_context
-                                          i_table_title     = i_table_title
-                                          i_component_name  = i_component_name
-                                          i_tabix           = line_num ).
-          " print columns
-          LOOP AT field_catalog INTO DATA(field_info)
-               WHERE no_out = abap_false.
-            IF lines( field_catalog ) = 1 AND field_catalog[ 1 ]-fieldname IS INITIAL.
-              ASSIGN <table_line> TO FIELD-SYMBOL(<field>).
-            ELSE.
-              ASSIGN COMPONENT field_info-fieldname OF STRUCTURE <table_line> TO <field>.
-            ENDIF.
-            CHECK     <field> IS ASSIGNED
-                  AND <field> IS NOT INITIAL.
-
-            DATA(varvalue) = COND tpda_var_value(
-                               WHEN field_info-datatype = zcl_ddve_abap_typedescr=>table_type THEN
-                                 me->add_itab( i_current_context  = space
-                                              i_table            = <field>
-                                              i_dont_add_a_point = abap_true )
-                               WHEN field_info-datatype = zcl_ddve_abap_typedescr=>structure_type THEN
-                                 structure->add_structure(
-                                     i_structure     = <field>
-                                     i_field_catalog = simple_field_catalog->get_by_data(
-                                                           i_structure = <field> ) )
-                               ELSE
-                                 <field> ).  " it must be a component
-
-            table_line_context = component->add( i_current_context = table_line_context
-                                                 i_component       = varvalue
-                                                 i_component_info  = field_info  ).
-
-          ENDLOOP.
-          IF table_line_context <> space.
-            r_current_context = |{ r_current_context } ({ table_line_context } )|.
-          ENDIF.
-          CLEAR table_line_context.
-        ENDLOOP.
-
-        r_current_context = COND #( WHEN i_dont_add_a_point = abap_true
-                                    THEN |{ r_current_context } )|
-                                    ELSE |{ r_current_context } ).| ).
-
-      CATCH cx_root INTO DATA(lx_root). " TODO: variable is assigned but never used (ABAP cleaner)
-        ASSERT 1 = 1.
-    ENDTRY.
+  METHOD constructor.
+    renderer = NEW #( ).
   ENDMETHOD.
 
-  METHOD add_prefix.
-    r_current_context = COND string( WHEN i_current_context IS NOT INITIAL THEN i_current_context ELSE || ).
-
-    IF i_tabix = 1.
-      r_current_context = COND #( WHEN i_table_title <> space THEN
-                                    |{ r_current_context }{ i_table_title } = VALUE #(|
-                                  WHEN i_component_name IS NOT INITIAL THEN
-                                    |{ r_current_context  }{ i_component_name } = VALUE #(|
-                                  ELSE
-                                    |{ r_current_context }VALUE #(| ).
-    ENDIF.
+  METHOD add_itab.
+    r_current_context = renderer->render_itab( i_table_title      = i_table_title
+                                               i_current_context  = i_current_context
+                                               i_table            = i_table
+                                               i_component_name   = i_component_name
+                                               i_fieldcatalog     = i_fieldcatalog
+                                               i_dont_add_a_point = i_dont_add_a_point
+                                               i_type_name        = i_type_name ).
   ENDMETHOD.
 
   METHOD handle_toolbar_set.
@@ -138,24 +71,31 @@ i_table = i_table  ) ).
   ENDMETHOD.
 
   METHOD prepare_output.
-    r_content_4_display = add_itab( i_table_title      = i_table_title
+    " typed form DATA(name) = VALUE typ( ) only when the debugger symbol name
+    " can be turned into a valid variable name - otherwise classic name = VALUE #( )
+    DATA(variable_name) = NEW zcl_ddve_type_resolver( )->derive_variable_name( i_table_title ).
+    DATA(type_name)     = COND string( WHEN variable_name IS NOT INITIAL THEN i_type_name ).
+
+    r_content_4_display = add_itab( i_table_title      = COND #( WHEN type_name IS NOT INITIAL
+                                                                 THEN variable_name
+                                                                 ELSE i_table_title )
                                     i_current_context  = space
                                     i_table            = i_table
                                     i_fieldcatalog     = i_fieldcatalog
-                                    i_dont_add_a_point = i_dont_add_a_point    ).
+                                    i_dont_add_a_point = i_dont_add_a_point
+                                    i_type_name        = type_name ).
   ENDMETHOD.
 
-METHOD show_popup_w_content.
-  DATA(content_4_display) = prepare_output( i_fieldcatalog = i_fieldcatalog
-                                            i_table        = i_table
-                                            i_table_title  = i_table_title ).
-  TRY.
-      DATA(formated_content) = zcl_ddve_prettyprinter_factory=>create( )->format( content_4_display ).
-    CATCH cx_class_not_existent INTO DATA(cx_class_not_existent).
-      formated_content = content_4_display.
-  ENDTRY.
-  NEW zcl_ddve_output_presenter( )->display_text( formated_content ).
-ENDMETHOD.
+  METHOD show_popup_w_content.
+    DATA(content_4_display) = prepare_output( i_fieldcatalog = i_fieldcatalog
+                                              i_table        = i_table
+                                              i_table_title  = i_table_title
+                                              i_type_name    = NEW zcl_ddve_debugger_integration( )->get_type_expression( i_table_title ) ).
+
+    DATA(formated_content) = zcl_ddve_prettyprinter_factory=>format_with_fallback( content_4_display ).
+
+    NEW zcl_ddve_output_presenter( )->display_text( formated_content ).
+  ENDMETHOD.
 
   METHOD filter_table_from_alv.
     FIELD-SYMBOLS <filtered_table> TYPE table.

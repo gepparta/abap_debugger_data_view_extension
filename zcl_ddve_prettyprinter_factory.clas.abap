@@ -4,8 +4,17 @@ CLASS zcl_ddve_prettyprinter_factory DEFINITION
   GLOBAL FRIENDS zcl_ddve_pret_printer_injector.
 
   PUBLIC SECTION.
-    CLASS-METHODS create RETURNING VALUE(r_pretty_printer) TYPE REF TO zif_ddve_value_pretty_printer
-                         RAISING   cx_class_not_existent.
+    CLASS-METHODS:
+      create RETURNING VALUE(r_pretty_printer) TYPE REF TO zif_ddve_value_pretty_printer
+             RAISING   cx_class_not_existent,
+
+      "! Format given content with the configured pretty printer.<br/>
+      "! Guarantees a usable result: on ANY error during creation or
+      "! formatting the unformatted input is returned unchanged.
+      "! @parameter i_content | unformatted value #() content
+      "! @parameter r_formated_content | formatted content or (on error) the unformatted input
+      format_with_fallback IMPORTING i_content                 TYPE string
+                           RETURNING VALUE(r_formated_content) TYPE string.
 
   PRIVATE SECTION.
     CLASS-DATA: pretty_printer TYPE REF TO zif_ddve_value_pretty_printer,
@@ -36,6 +45,15 @@ CLASS zcl_ddve_prettyprinter_factory IMPLEMENTATION.
     ENDIF.
 
     r_pretty_printer = pretty_printer.
+  ENDMETHOD.
+
+  METHOD format_with_fallback.
+    TRY.
+        r_formated_content = create( )->format( i_content ).
+      CATCH cx_root ##CATCH_ALL.
+        " guarantee: any formatting error must fall back to the unformatted content
+        r_formated_content = i_content.
+    ENDTRY.
   ENDMETHOD.
 
   METHOD get_activ_implementing_classes.

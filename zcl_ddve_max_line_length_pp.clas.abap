@@ -11,12 +11,12 @@ CLASS zcl_ddve_max_line_length_pp DEFINITION
 
     ALIASES format FOR zif_ddve_value_pretty_printer~format.
 
-    "! @parameter indent_size     | Number of spaces to begin each line with
-    "! @parameter max_line_length | Maximum number of characters for each line. Value has
+    "! @parameter i_indent_size     | Number of spaces to begin each line with
+    "! @parameter i_max_line_length | Maximum number of characters for each line. Value has
     "! to be between 20 and 255 characters (maximum of ABAP editor).
     METHODS constructor
-      IMPORTING indent_size     TYPE i DEFAULT 2
-                max_line_length TYPE i DEFAULT 128.
+      IMPORTING i_indent_size     TYPE i DEFAULT 2
+                i_max_line_length TYPE i DEFAULT 128.
 
   PROTECTED SECTION.
 
@@ -34,12 +34,12 @@ CLASS zcl_ddve_max_line_length_pp DEFINITION
            ty_lines       TYPE TABLE OF string WITH DEFAULT KEY.
 
     DATA:
-      m_indent_size     TYPE i,
-      m_max_line_length TYPE i,
-      m_reader          TYPE REF TO cl_abap_string_c_reader,
-      m_blocks          TYPE ty_block_table,
-      m_line            TYPE string,
-      m_lines           TYPE ty_lines.
+      indent_size     TYPE i,
+      max_line_length TYPE i,
+      reader          TYPE REF TO cl_abap_string_c_reader,
+      blocks          TYPE ty_block_table,
+      current_line    TYPE string,
+      output_lines    TYPE ty_lines.
 
     CONSTANTS:
       c_newline          TYPE abap_char1 VALUE cl_abap_char_utilities=>cr_lf,
@@ -85,7 +85,7 @@ CLASS zcl_ddve_max_line_length_pp DEFINITION
         RETURNING VALUE(r_block) TYPE ty_block,
 
       "! Calculates number of spaces for the next line.
-      "! Previous line has to be appended already to m_lines and block control must exist.
+      "! Previous line has to be appended already to output_lines and block control must exist.
       "!
       "! @parameter r_spaces |
       calculate_indent
@@ -107,7 +107,7 @@ ENDCLASS.
 
 CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
   METHOD add_to_block_control.
-    DATA block LIKE LINE OF m_blocks.
+    DATA block LIKE LINE OF blocks.
 
     " Example:           Line
     " D = VALUE #(          1
@@ -138,7 +138,7 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
     CHECK    i_char = c_opening_bracket
           OR i_char = c_closing_bracket.
 
-    block-id             = lines( m_blocks ) + 1.
+    block-id             = lines( blocks ) + 1.
     block-char           = i_char.
     block-line_index     = i_line_index.
     block-level_of_depth = calculate_level_of_depth( i_char ).
@@ -147,29 +147,29 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
     " With the closing bracket, a group of two blocks (with the same group id) is complete.
     IF i_char = c_closing_bracket.
       block-is_completed = abap_true.
-      ASSIGN m_blocks[ group_id = block-group_id ] TO FIELD-SYMBOL(<opening_block>).
+      ASSIGN blocks[ group_id = block-group_id ] TO FIELD-SYMBOL(<opening_block>).
       IF sy-subrc = 0.
         <opening_block>-is_completed = abap_true.
       ENDIF.
     ENDIF.
 
-    APPEND block TO m_blocks.
+    APPEND block TO blocks.
   ENDMETHOD.
 
   METHOD append_line.
-    APPEND m_line TO m_lines.
-    CLEAR m_line.
+    APPEND current_line TO output_lines.
+    CLEAR current_line.
   ENDMETHOD.
 
   METHOD calculate_group_id.
     DATA excluded_group_ids TYPE TABLE OF ty_block-group_id.
 
-    DATA(index) = lines( m_blocks ).
+    DATA(index) = lines( blocks ).
 
     " each opening bracket starts a new group
     IF i_char = c_opening_bracket.
       r_group_id = COND #( WHEN index > 0
-                           THEN m_blocks[ index ]-group_id + 1
+                           THEN blocks[ index ]-group_id + 1
                            ELSE 1 ).
       RETURN.
     ENDIF.
@@ -178,7 +178,7 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
     " and assign group id of corresponding opening bracket
     IF i_char = c_closing_bracket.
       WHILE index > 0.
-        ASSIGN m_blocks[ index ] TO FIELD-SYMBOL(<block>).
+        ASSIGN blocks[ index ] TO FIELD-SYMBOL(<block>).
         IF <block>-char = c_closing_bracket.
           " group is already closed so exclude its group_id
           APPEND <block>-group_id TO excluded_group_ids.
@@ -196,42 +196,42 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
   METHOD calculate_indent.
     DATA level TYPE ty_block-level_of_depth.
 
-    IF lines( m_lines ) < 1.
+    IF lines( output_lines ) < 1.
       RETURN.
     ENDIF.
-    DATA(last_line) = m_lines[ lines( m_lines ) ].
+    DATA(last_line) = output_lines[ lines( output_lines ) ].
     DATA(last_char_of_last_line) = substring( val = last_line
                                               off = strlen( last_line ) - 1 ).
 
     CASE last_char_of_last_line.
       WHEN c_opening_bracket OR c_closing_bracket.
-        level = m_blocks[ lines( m_blocks ) ]-level_of_depth - 1.
+        level = blocks[ lines( blocks ) ]-level_of_depth - 1.
       WHEN c_enclosure OR c_concatenate.
         " find latest block that is not completed
-        DATA(block_index) = lines( m_blocks ).
+        DATA(block_index) = lines( blocks ).
         WHILE block_index > 0.
-          IF m_blocks[ block_index ]-is_completed = abap_false.
-            level = m_blocks[ block_index ]-level_of_depth.
+          IF blocks[ block_index ]-is_completed = abap_false.
+            level = blocks[ block_index ]-level_of_depth.
             EXIT.
           ENDIF.
           block_index = block_index - 1.
         ENDWHILE.
     ENDCASE.
 
-    DATA(lv_num_spaces) = level * m_indent_size.
-    DO lv_num_spaces TIMES.
+    DATA(number_of_spaces) = level * indent_size.
+    DO number_of_spaces TIMES.
       r_spaces = |{ r_spaces } |.
     ENDDO.
   ENDMETHOD.
 
   METHOD calculate_level_of_depth.
-    DATA(index) = lines( m_blocks ).
+    DATA(index) = lines( blocks ).
     IF index = 0.
       " first entry
       r_level_of_depth = 1.
       RETURN.
     ENDIF.
-    DATA(previous_block) = m_blocks[ index ].
+    DATA(previous_block) = blocks[ index ].
     r_level_of_depth = COND #(
       WHEN i_char = c_opening_bracket AND previous_block-char = c_closing_bracket
         OR i_char = c_closing_bracket AND previous_block-char = c_opening_bracket THEN previous_block-level_of_depth
@@ -240,17 +240,17 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD constructor.
-    m_indent_size = indent_size.
-    m_max_line_length = COND #(
-      WHEN max_line_length >= 20 AND max_line_length <= 255
-      THEN max_line_length
+    indent_size = i_indent_size.
+    max_line_length = COND #(
+      WHEN i_max_line_length >= 20 AND i_max_line_length <= 255
+      THEN i_max_line_length
       ELSE 128 ).
   ENDMETHOD.
 
   METHOD get_lines_as_string.
     DATA(writer) = NEW cl_abap_string_c_writer( ).
 
-    LOOP AT m_lines ASSIGNING FIELD-SYMBOL(<line>).
+    LOOP AT output_lines ASSIGNING FIELD-SYMBOL(<line>).
       IF sy-tabix > 1.
         writer->write( |{ c_newline }| ).
       ENDIF.
@@ -263,31 +263,31 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
 
   METHOD handle_char.
     " Skip blanks between brackets and components
-    IF m_line CO space AND i_char CO space.       " EQ space does not work
+    IF current_line CO space AND i_char CO space.       " EQ space does not work
       RETURN.
     ENDIF.
 
     IF i_char = c_enclosure.
       DATA(value) = read_value_between_enclosures( ).
-      DATA(parts) = split_value_at_max_line_length( i_length_of_first_line = strlen( m_line )         " to fill up current line
+      DATA(parts) = split_value_at_max_line_length( i_length_of_first_line = strlen( current_line )  " to fill up current line
                                                     i_value                = value
                                                     i_indent_size          = strlen( calculate_indent( ) ) ).  " indent size needed for split calculation
       LOOP AT parts INTO DATA(part).
-        m_line = m_line && part.
+        current_line = current_line && part.
         append_line( ).
         update_indent_of_last_line( ).
       ENDLOOP.
       RETURN.
     ENDIF.
 
-    m_line = m_line && i_char.
+    current_line = current_line && i_char.
 
     IF    i_char = c_opening_bracket
        OR i_char = c_closing_bracket.
       append_line( ).                          " append line first
       add_to_block_control(                    " block control expects that line is appended
                             i_char       = i_char
-                            i_line_index = lines( m_lines ) ).
+                            i_line_index = lines( output_lines ) ).
       update_indent_of_last_line( ).           " indent calculation requires block control
     ENDIF.
   ENDMETHOD.
@@ -297,7 +297,7 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
 
     DATA(value) = | { c_enclosure }|.
     DO.
-      char = m_reader->read( 1 ).
+      char = reader->read( 1 ).
       value = value && char.
       "^[ ](['].*['])[ ]$ extracts value surrounded by enclosures
       "^[ ]['](.*)['][ ]$ extracts value only
@@ -311,36 +311,46 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD split_value_at_max_line_length.
-    "#TODO Don't break line between escape and enclosure.
     DATA part TYPE string.
 
     " if max length is not exceeded, just return input value.
-    IF i_length_of_first_line + strlen( i_value ) <= m_max_line_length.
+    IF i_length_of_first_line + strlen( i_value ) <= max_line_length.
       APPEND i_value TO r_parts.
       RETURN.
     ENDIF.
 
-    DATA(lo_reader) = NEW cl_abap_string_c_reader( str = i_value ).
-    DATA(max_length) = m_max_line_length - i_length_of_first_line - i_indent_size.  " first line is shorter
-    WHILE lo_reader->data_available( ) = abap_true.
-      IF strlen( part ) = ( max_length - 4 ).  " 4 chars for closing enclosure, space and &&
+    DATA(max_length) = max_line_length - i_length_of_first_line - i_indent_size.  " first line is shorter
+    DATA(value_length) = strlen( i_value ).
+    DATA(offset) = 0.
+    WHILE offset < value_length.
+      " an escaped enclosure ('') is one atomic token - it must never be split across lines;
+      " pairs can only occur strictly inside the surrounding enclosures
+      DATA(token_length) = COND i( WHEN     offset > 0
+                                        AND offset < value_length - 2
+                                        AND substring( val = i_value off = offset     len = 1 ) = c_enclosure
+                                        AND substring( val = i_value off = offset + 1 len = 1 ) = c_enclosure_escape
+                                   THEN 2
+                                   ELSE 1 ).
+      IF strlen( part ) >= ( max_length - 4 ).  " 4 chars for closing enclosure, space and &&
         APPEND |{ part }{ c_enclosure } { c_concatenate }{ c_concatenate }| TO r_parts.
         part = |{ c_enclosure }|.           " starting with indent and a opening enclosure
         DO i_indent_size TIMES.
           part = | { part }|.
         ENDDO.
-        max_length = m_max_line_length.     " full line length beginning at 2nd line
+        max_length = max_line_length.     " full line length beginning at 2nd line
       ENDIF.
-      part = part && lo_reader->read( 1 ).
+      part = part && substring( val = i_value
+                                off = offset
+                                len = token_length ).
+      offset = offset + token_length.
     ENDWHILE.
-    lo_reader->close( ).
     IF part IS NOT INITIAL.
       APPEND |{ part }| TO r_parts.
     ENDIF.
   ENDMETHOD.
 
   METHOD update_indent_of_last_line.
-    ASSIGN m_lines[ lines( m_lines ) ] TO FIELD-SYMBOL(<last_line>).
+    ASSIGN output_lines[ lines( output_lines ) ] TO FIELD-SYMBOL(<last_line>).
     SHIFT <last_line> LEFT DELETING LEADING space.
     <last_line> = |{ calculate_indent( ) }{ <last_line> }|.
   ENDMETHOD.
@@ -351,21 +361,32 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
 
     clear_members( ).
 
-    m_reader = NEW cl_abap_string_c_reader( str = i_unformated_value_content ).
+    " an inline declaration DATA(name) on the LHS must not enter the
+    " bracket-based block control - keep it verbatim on the first line
+    DATA(content) = i_unformated_value_content.
+    FIND PCRE '^DATA\([^)]+\)' IN content MATCH LENGTH DATA(prefix_length).
+    IF sy-subrc = 0.
+      current_line = substring( val = content
+                                len = prefix_length ).
+      content = substring( val = content
+                           off = prefix_length ).
+    ENDIF.
 
-    WHILE m_reader->data_available( ) = abap_true.
-      char = m_reader->read( 1 ).
+    reader = NEW cl_abap_string_c_reader( str = content ).
+
+    WHILE reader->data_available( ) = abap_true.
+      char = reader->read( 1 ).
       handle_char( char ).
     ENDWHILE.
-    m_reader->close( ).
+    reader->close( ).
 
     r_formated_content = get_lines_as_string( ).
   ENDMETHOD.
 
   METHOD clear_members.
-    CLEAR: m_reader,
-           m_blocks,
-           m_line,
-           m_lines.
+    CLEAR: reader,
+           blocks,
+           current_line,
+           output_lines.
   ENDMETHOD.
 ENDCLASS.

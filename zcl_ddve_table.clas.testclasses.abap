@@ -13,6 +13,7 @@ CLASS ltc_table_enh_should DEFINITION FOR TESTING
       teardown,
       "!check of
       prepare_ouput_w_1_line_itab FOR TESTING,
+      prepare_typed_output        FOR TESTING,
       handle_structure_in_itab    FOR TESTING,
       handle_itab_in_itab         FOR TESTING,
       st05_main_record_table      FOR TESTING RAISING cx_static_check,
@@ -56,6 +57,26 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
                                                    msg = |Character String Different| ).
 
 
+  ENDMETHOD.
+
+  METHOD prepare_typed_output.
+    TYPES: BEGIN OF ty_sflight_mini,
+             carrid TYPE s_carr_id,
+             connid TYPE s_conn_id,
+           END OF ty_sflight_mini.
+    DATA sflight_lines TYPE STANDARD TABLE OF ty_sflight_mini.
+
+    sflight_lines = VALUE #( ( carrid = 'AA' connid = '0017' ) ).
+
+    " field-symbol brackets are stripped for the DATA( ) variable name
+    DATA(output) = table_view->prepare_output( i_table       = sflight_lines
+                                               i_table_title = '<FLIGHTS>'
+                                               i_type_name   = 'ZCL_ORDER=>TT_FLIGHTS' ).
+
+    cl_abap_unit_assert=>assert_equals(
+        act = output
+        exp = |DATA(FLIGHTS) = VALUE ZCL_ORDER=>TT_FLIGHTS( ( CARRID = 'AA' CONNID = '0017' ) ).|
+        msg = |Typed table statement was not built correctly| ).
   ENDMETHOD.
 
   METHOD handle_itab_in_itab.

@@ -15,12 +15,24 @@ DATA:
   END OF flights_with_header,
   flights_hashed TYPE HASHED TABLE OF sflight WITH UNIQUE KEY mandt carrid connid fldate.
 
+FIELD-SYMBOLS: <table_1>     TYPE STANDARD TABLE,
+               <table_2>     TYPE STANDARD TABLE,
+               <table_3>     TYPE HASHED TABLE,
+               <table_4>     TYPE ANY TABLE,
+               <structure_1> TYPE any,
+               <structure_2> TYPE any,
+               <structure_3> TYPE any,
+               <structure_4> TYPE any.
+
 " for obsolete tables with header
 
 flights_with_header[] = VALUE #( connid = '0017'
                                  ( carrid = 'AA' fldate = '20141217' )
                                  ( carrid = 'AB' fldate = '20150225' )
                                  ( carrid = 'AC' fldate = '20150225' ) ).
+
+ASSIGN flights_with_header[] TO <table_1>.
+ASSIGN flights_with_header TO <structure_1>.
 
 " for table enhancement
 
@@ -49,8 +61,12 @@ lt_flights = VALUE #( mandt      = '100'
                         seatsocc_b = '30 '
                         seatsocc_f = '19 ' ) ).
 
+ASSIGN lt_flights TO <table_2>.
+
 " for testing filtered view
 INSERT LINES OF lt_flights INTO TABLE flights_hashed.
+
+ASSIGN flights_hashed TO <table_3>.
 
 " for testing structure enhancement
 ls_flight = VALUE #( mandt      = '100'
@@ -67,6 +83,8 @@ ls_flight = VALUE #( mandt      = '100'
                      seatsocc_b = '28'
                      seatsmax_f = '21'
                      seatsocc_f = '21' ).
+
+ASSIGN ls_flight TO <structure_2>.
 
 " nested examples
 TYPES: BEGIN OF t_col2,
@@ -98,6 +116,9 @@ DATA: nested_itab   TYPE my_nested_itab_type,
 nested_struc = VALUE my_nested_struc_type( col1 = 1
                                            col2 = VALUE #( col1 = 1
                                                            col2 = 2 ) ).
+
+ASSIGN nested_struc TO <structure_3>.
+
 itab_in_struc = VALUE nested_type( col1 = 1
 
                                    col2 = VALUE #( col1 = 11
@@ -109,6 +130,7 @@ itab_in_struc = VALUE nested_type( col1 = 1
                                                      col2 = VALUE #( col1 = 3221
                                                                      col2 = 3222 ) ) ) ).
 
+ASSIGN nested_struc TO <structure_4>.
 " build itab
 nested_itab = VALUE my_nested_itab_type( ( col1 = 1
                                            col2 = VALUE #( col1 = 1
@@ -116,6 +138,8 @@ nested_itab = VALUE my_nested_itab_type( ( col1 = 1
                                            col3 = VALUE #( " start here a nested itab
                                                            ( col1 = 1 )  " first row of it
                                                            ( col2-col2 = 2 ) ) ) ).
+
+ASSIGN nested_itab TO <table_4>.
 
 " do something with structure
 DATA(ls_col2) = nested_struc-col2.

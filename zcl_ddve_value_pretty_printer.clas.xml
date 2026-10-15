@@ -16,7 +16,7 @@
     <SEOCOMPOTX>
      <CMPNAME>ADD_EMPTY_VALUE_OPERATOR</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>empty : &apos;VALUE #( )&apos;</DESCRIPT>
+     <DESCRIPT>empty : &apos;VALUE #|typ( )&apos;</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CMPNAME>ADD_STRUCTURE_CONTENT</CMPNAME>
@@ -26,12 +26,12 @@
     <SEOCOMPOTX>
      <CMPNAME>ADD_STRUCTURE_RHS</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>struct : &apos;VALUE #(&apos; struct2 &apos;)&apos;</DESCRIPT>
+     <DESCRIPT>struct : &apos;VALUE #|typ(&apos; struct2 &apos;)&apos;</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CMPNAME>ADD_TABLE</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>table : &apos;VALUE #(&apos; ( &apos;( )&apos; | ( &apos;(&apos; inner_rhs &apos;)&apos; )+ ) &apos;)&apos;</DESCRIPT>
+     <DESCRIPT>table : &apos;VALUE #|typ(&apos; ( &apos;( )&apos; | ( &apos;(&apos; inner_rhs &apos;)&apos; )+ ) &apos;)</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CMPNAME>ASSIGN</CMPNAME>

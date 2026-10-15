@@ -20,20 +20,28 @@ CLASS ltcl_pretty_printer_should DEFINITION FINAL FOR TESTING
       max_line_length_less_128 FOR TESTING RAISING cx_static_check,
 
       "!calls to pretty printer should be idempotent
-      clear_last_result FOR TESTING RAISING cx_static_check.
+      clear_last_result FOR TESTING RAISING cx_static_check,
+
+      "! an escaped apostrophe ('') must never be split across two lines,
+      "! otherwise the generated ABAP is syntactically invalid
+      keep_escape_pair_on_one_line FOR TESTING RAISING cx_static_check,
+
+      "! DATA(name) on the left hand side must not enter the bracket-based
+      "! block control - it has to stay verbatim at the start of the first line
+      keep_inline_decl_on_1st_line FOR TESTING RAISING cx_static_check.
 ENDCLASS.
 
 CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD setup.
     "as we are here in a private unit test class so we don't need to use the factory or injector for instantiating
-    cut = NEW #( indent_size = 2 max_line_length = 128 ).
+    cut = NEW #( i_indent_size = 2 i_max_line_length = 128 ).
   ENDMETHOD.
 
   METHOD escape_apostrophes.
     " GIVEN
-    cut = NEW #( indent_size     = 2
-                 max_line_length = 128 ).
+    cut = NEW #( i_indent_size     = 2
+                 i_max_line_length = 128 ).
     DATA(input) = |D = VALUE #( COL_1 = 'It''s easy (isn''t it?)' COL_2 = 'keep on doin''' COL_3 = '''ne Weile' COL_4 = '''' )|.
     DATA(expected) = |D = VALUE #(\r  COL_1 = 'It''s easy (isn''t it?)'\r  COL_2 = 'keep on doin'''\r  COL_3 = '''ne Weile'\r  COL_4 = ''''\r)|.
 
@@ -48,8 +56,8 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD indent_and_add_line_breaks.
     " GIVEN
-    cut = NEW #( indent_size     = 2
-                 max_line_length = 128 ).
+    cut = NEW #( i_indent_size     = 2
+                 i_max_line_length = 128 ).
     DATA(input) = |D = VALUE #( COL1 = '1' COL2 = VALUE #( COL1 = '1' COL2 = '2' ) COL3 = '3' COL4 = VALUE #( COL1 = '1' COL2 = '2' ) )|.
     DATA(expected) = |D = VALUE #(\r  COL1 = '1'\r  COL2 = VALUE #(\r    COL1 = '1'\r    COL2 = '2'\r  )\r  COL3 = '3'\r  COL4 = VALUE #(\r    COL1 = '1'\r    COL2 = '2'\r  )\r)|.
 
@@ -77,8 +85,8 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD break_line_if_length_less_20.
     " GIVEN
-    cut = NEW #( indent_size     = 2
-                 max_line_length = 20 ).
+    cut = NEW #( i_indent_size     = 2
+                 i_max_line_length = 20 ).
     DATA(input) = |D = VALUE #( C1 = 'A123456789B123456789C123456789D123456789E123456789' )|.
     DATA(expected) = |D = VALUE #(\r  C1 = 'A123456789' &&\r  'B123456789C1234' &&\r  '56789D123456789' &&\r  'E123456789'\r)|.
 
@@ -96,8 +104,8 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
     DATA lines_expected TYPE TABLE OF string.
 
     " GIVEN
-    cut = NEW #( indent_size     = 2
-                 max_line_length = 128 ).
+    cut = NEW #( i_indent_size     = 2
+                 i_max_line_length = 128 ).
     DATA(input) = |EDIDD = VALUE #( ( SEGNAM = 'E1EDK01' SDATA = 'EUREUR1.00000     0021             DE12345678901       DE12345678901       INVO1234561234| &&
                   |                         2.000             2.000             ABCDE                                                  1112223344          | &&
                   |     ABCDEDFGHIJKLMNOPQRSTUVWXYZ       AND STILL SOME MORE CHARACTERS - THERE WILL BE NO END                                            | &&
@@ -151,8 +159,8 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD clear_last_result.
     " GIVEN
-    cut = NEW #( indent_size     = 2
-                 max_line_length = 20 ).
+    cut = NEW #( i_indent_size     = 2
+                 i_max_line_length = 20 ).
     DATA(input) = |D = VALUE #( C1 = 'A123456789B123456789C123456789D123456789E123456789' )|.
     DATA(expected) = |D = VALUE #(\r  C1 = 'A123456789' &&\r  'B123456789C1234' &&\r  '56789D123456789' &&\r  'E123456789'\r)|.
 
@@ -165,6 +173,39 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
     cl_abap_unit_assert=>assert_equals( exp = expected
                                         act = formatted_string
                                         msg = |Values exceeding maximum line length are not handled correctly.| ).
+  ENDMETHOD.
+
+  METHOD keep_escape_pair_on_one_line.
+    " GIVEN - with max_line_length 20 the first line break position falls exactly
+    "         between the two apostrophes of the escape sequence '' after ABCDEFGHI
+    cut = NEW #( i_indent_size     = 2
+                 i_max_line_length = 20 ).
+    DATA(input) = |D = VALUE #( C1 = 'ABCDEFGHI''KLMNOPQRSTUVWXYZ0123456789' )|.
+    DATA(expected) = |D = VALUE #(\r  C1 = 'ABCDEFGHI''' &&\r  'KLMNOPQRSTUVWXY' &&\r  'Z0123456789'\r)|.
+
+    " WHEN
+    DATA(formatted_string) = cut->format( input ).
+
+    " THEN
+    cl_abap_unit_assert=>assert_equals( exp = expected
+                                        act = formatted_string
+                                        msg = |Escaped apostrophe ('') was split across two lines - generated ABAP is invalid| ).
+  ENDMETHOD.
+
+  METHOD keep_inline_decl_on_1st_line.
+    " GIVEN
+    cut = NEW #( i_indent_size     = 2
+                 i_max_line_length = 128 ).
+    DATA(input) = |DATA(D) = VALUE SFLIGHT( COL1 = '1' )|.
+    DATA(expected) = |DATA(D) = VALUE SFLIGHT(\r  COL1 = '1'\r)|.
+
+    " WHEN
+    DATA(formatted_string) = cut->format( input ).
+
+    " THEN
+    cl_abap_unit_assert=>assert_equals( exp = expected
+                                        act = formatted_string
+                                        msg = |DATA(name) prefix was not kept verbatim on the first line| ).
   ENDMETHOD.
 
 ENDCLASS.

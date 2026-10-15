@@ -1,16 +1,51 @@
 *"* use this source file for your ABAP unit test classes
+"! test double: pretty printer that always fails with a dynamic exception
+CLASS ltd_throwing_printer DEFINITION FINAL FOR TESTING.
+  PUBLIC SECTION.
+    INTERFACES zif_ddve_value_pretty_printer.
+ENDCLASS.
+
+CLASS ltd_throwing_printer IMPLEMENTATION.
+  METHOD zif_ddve_value_pretty_printer~format.
+    " simulate an arbitrary runtime error inside a printer implementation
+    RAISE EXCEPTION NEW cx_sy_itab_line_not_found( ).
+  ENDMETHOD.
+ENDCLASS.
+
+
+"! test double: pretty printer returning a recognizable constant
+CLASS ltd_fake_printer DEFINITION FINAL FOR TESTING.
+  PUBLIC SECTION.
+    INTERFACES zif_ddve_value_pretty_printer.
+ENDCLASS.
+
+CLASS ltd_fake_printer IMPLEMENTATION.
+  METHOD zif_ddve_value_pretty_printer~format.
+    r_formated_content = |FORMATED|.
+  ENDMETHOD.
+ENDCLASS.
+
+
 CLASS ltcl_pp_factory_should DEFINITION DEFERRED.
 CLASS zcl_ddve_prettyprinter_factory DEFINITION LOCAL FRIENDS ltcl_pp_factory_should.
 CLASS ltcl_pp_factory_should DEFINITION FINAL
   FOR TESTING RISK LEVEL HARMLESS DURATION SHORT.
 
   PRIVATE SECTION.
-    METHODS: find_standard_pretty_printer   FOR TESTING RAISING cx_static_check,
-             create_standard_pretty_printer FOR TESTING RAISING cx_static_check.
+    METHODS: teardown,
+             find_standard_pretty_printer   FOR TESTING RAISING cx_static_check,
+             create_standard_pretty_printer FOR TESTING RAISING cx_static_check,
+             fall_back_on_printer_error     FOR TESTING RAISING cx_static_check,
+             format_via_injected_printer    FOR TESTING RAISING cx_static_check.
 ENDCLASS.
 
 
 CLASS ltcl_pp_factory_should IMPLEMENTATION.
+  METHOD teardown.
+    " reset the factory singleton so an injected test double never leaks into other tests
+    zcl_ddve_prettyprinter_factory=>pretty_printer = VALUE #( ).
+  ENDMETHOD.
+
   METHOD find_standard_pretty_printer.
     " GIVEN - ...
 
@@ -21,7 +56,7 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
     cl_abap_unit_assert=>assert_table_contains(
         line  = |ZCL_DDVE_VALUE_PRETTY_PRINTER|
         table = classes
-        msg   = |Main implementation of zif_op_value_pretty_printer was not found|    ).
+        msg   = |Main implementation of zif_ddve_value_pretty_printer was not found|    ).
   ENDMETHOD.
 
   METHOD create_standard_pretty_printer.
@@ -40,5 +75,34 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
         cl_abap_unit_assert=>fail(
             msg = |Standard class ZCL_DDVE_VALUE_PRETTY_PRINTER was not used in factory but should have been. Error is { error->get_longtext( ) }| ).
     ENDTRY.
+  ENDMETHOD.
+
+  METHOD fall_back_on_printer_error.
+    " GIVEN - a printer that fails with an undeclared dynamic exception
+    zcl_ddve_pret_printer_injector=>inject_pretty_printer( NEW ltd_throwing_printer( ) ).
+    FINAL(unformated_content) = `X = VALUE #( ( COL1 = 1 ) ).`.
+
+    " WHEN
+    FINAL(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( unformated_content ).
+
+    " THEN
+    cl_abap_unit_assert=>assert_equals(
+        exp = unformated_content
+        act = result
+        msg = |On a formatting error the unformatted content must be returned| ).
+  ENDMETHOD.
+
+  METHOD format_via_injected_printer.
+    " GIVEN - a working printer
+    zcl_ddve_pret_printer_injector=>inject_pretty_printer( NEW ltd_fake_printer( ) ).
+
+    " WHEN
+    FINAL(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( `X = VALUE #( ).` ).
+
+    " THEN
+    cl_abap_unit_assert=>assert_equals(
+        exp = |FORMATED|
+        act = result
+        msg = |The formatted content of the configured printer must be returned| ).
   ENDMETHOD.
 ENDCLASS.
