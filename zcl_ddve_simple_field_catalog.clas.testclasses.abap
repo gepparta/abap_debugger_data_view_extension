@@ -119,7 +119,7 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
                              dummy_field_1 = 666
                              dummy_field_2 = 'Hello' ).
 
-    DATA(lt_field_catalog_act) = cut->get_fieldcat_from_local_type(
+    DATA(lt_field_catalog_act) = cut->get_fieldcatalog_from_local(
         i_rtti = CAST cl_abap_structdescr( cl_abap_structdescr=>describe_by_data( p_data = ls_struct ) ) ).
 
     DATA(lt_field_catalog_exp) = VALUE lvc_t_fcat(

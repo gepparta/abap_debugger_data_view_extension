@@ -21,7 +21,7 @@ ENDCLASS.
 
 CLASS ltd_fake_printer IMPLEMENTATION.
   METHOD zif_ddve_value_pretty_printer~format.
-    r_formated_content = |FORMATED|.
+    r_formatted_content = |FORMATED|.
   ENDMETHOD.
 ENDCLASS.
 
@@ -36,7 +36,8 @@ CLASS ltcl_pp_factory_should DEFINITION FINAL
              find_standard_pretty_printer   FOR TESTING RAISING cx_static_check,
              create_standard_pretty_printer FOR TESTING RAISING cx_static_check,
              fall_back_on_printer_error     FOR TESTING RAISING cx_static_check,
-             format_via_injected_printer    FOR TESTING RAISING cx_static_check.
+             format_via_injected_printer    FOR TESTING RAISING cx_static_check,
+             format_real_sflight_statement  FOR TESTING RAISING cx_static_check.
 ENDCLASS.
 
 
@@ -50,7 +51,7 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
     " GIVEN - ...
 
     " WHEN
-    DATA(classes) = zcl_ddve_prettyprinter_factory=>get_activ_implementing_classes( ).
+    DATA(classes) = zcl_ddve_prettyprinter_factory=>get_active_impl_classes( ).
 
     " THEN
     cl_abap_unit_assert=>assert_table_contains(
@@ -80,14 +81,14 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
   METHOD fall_back_on_printer_error.
     " GIVEN - a printer that fails with an undeclared dynamic exception
     zcl_ddve_pret_printer_injector=>inject_pretty_printer( NEW ltd_throwing_printer( ) ).
-    DATA(unformated_content) = `X = VALUE #( ( COL1 = 1 ) ).`.
+    DATA(unformatted_content) = `X = VALUE #( ( COL1 = 1 ) ).`.
 
     " WHEN
-    DATA(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( unformated_content ).
+    DATA(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( unformatted_content ).
 
     " THEN
     cl_abap_unit_assert=>assert_equals(
-        exp = unformated_content
+        exp = unformatted_content
         act = result
         msg = |On a formatting error the unformatted content must be returned| ).
   ENDMETHOD.
@@ -104,5 +105,31 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
         exp = |FORMATED|
         act = result
         msg = |The formatted content of the configured printer must be returned| ).
+  ENDMETHOD.
+
+  METHOD format_real_sflight_statement.
+    " GIVEN - repro for the debugger report of 16.10.2026: a full typed
+    "         SFLIGHT export came back as an unformatted one-liner;
+    "         exercise the complete chain create( ) -> format( )
+    zcl_ddve_prettyprinter_factory=>pretty_printer = VALUE #( ).
+    zcl_ddve_pret_printer_injector=>inject_user_class_customizing( VALUE #(
+        ( user_name = sy-uname  class_name = |ZCL_DDVE_VALUE_PRETTY_PRINTER| ) ) ).
+
+    DATA(input) = |DATA(LS_FLIGHT) = VALUE SFLIGHT( MANDT = '100' CARRID = 'AA' CONNID = '0017'|
+               && | FLDATE = '20141217' PRICE = '422.94' CURRENCY = 'USD' PLANETYPE = '747-400'|
+               && | SEATSMAX = 385 SEATSOCC = 372 PAYMENTSUM = '192437.84' SEATSMAX_B = 31|
+               && | SEATSOCC_B = 28 SEATSMAX_F = 21 SEATSOCC_F = 21 ).|.
+
+    " WHEN
+    DATA(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( input ).
+
+    " THEN - the statement must be formatted (multi-line), not the fallback
+    cl_abap_unit_assert=>assert_differs(
+        act = result
+        exp = input
+        msg = |Pretty printer fell back to the unformatted one-liner| ).
+    cl_abap_unit_assert=>assert_true(
+        act = xsdbool( result CS |\n| )
+        msg = |Formatted output must contain line breaks| ).
   ENDMETHOD.
 ENDCLASS.

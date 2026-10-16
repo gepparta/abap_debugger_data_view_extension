@@ -15,7 +15,7 @@ CLASS zcl_ddve_value_renderer DEFINITION
       "! @parameter i_table            | any internal table
       "! @parameter i_component_name   | component name when the table is a component of a structure
       "! @parameter i_fieldcatalog     | field catalog; derived from i_table when omitted
-      "! @parameter i_dont_add_a_point | suppress the trailing point (for nested rendering)
+      "! @parameter i_add_period       | add the trailing period (suppressed for nested rendering)
       "! @parameter i_type_name        | type expression for the outermost VALUE; when supplied
       "!                                 the statement is rendered as DATA(name) = VALUE typ( )
       "! @parameter r_current_context  | changed context with added table data as string
@@ -25,7 +25,7 @@ CLASS zcl_ddve_value_renderer DEFINITION
                   i_table                  TYPE ANY TABLE
                   i_component_name         TYPE lvc_fname  OPTIONAL
                   i_fieldcatalog           TYPE lvc_t_fcat OPTIONAL
-                  i_dont_add_a_point       TYPE boole_d    OPTIONAL
+                  i_add_period             TYPE boole_d    DEFAULT abap_true
                   i_type_name              TYPE string     OPTIONAL
         RETURNING VALUE(r_current_context) TYPE string,
 
@@ -80,7 +80,7 @@ CLASS zcl_ddve_value_renderer DEFINITION
 
       add_closing
         IMPORTING i_current_context        TYPE string
-                  i_dont_add_a_point       TYPE boole_d
+                  i_add_period             TYPE boole_d
         RETURNING VALUE(r_current_context) TYPE string,
 
       add_error_marker
@@ -172,8 +172,8 @@ CLASS zcl_ddve_value_renderer IMPLEMENTATION.
                                           i_tabix           = 1 ).
         ENDIF.
 
-        r_current_context = add_closing( i_current_context  = r_current_context
-                                         i_dont_add_a_point = i_dont_add_a_point ).
+        r_current_context = add_closing( i_current_context = r_current_context
+                                         i_add_period      = i_add_period ).
 
       CATCH cx_root INTO DATA(error).
         r_current_context = add_error_marker( i_current_context = r_current_context
@@ -218,9 +218,9 @@ CLASS zcl_ddve_value_renderer IMPLEMENTATION.
   METHOD resolve_cell_value.
     r_value = COND tpda_var_value(
                 WHEN i_field_info-datatype = zcl_ddve_abap_typedescr=>table_type THEN
-                  render_itab( i_current_context  = space
-                               i_table            = i_cell
-                               i_dont_add_a_point = abap_true )
+                  render_itab( i_current_context = space
+                               i_table           = i_cell
+                               i_add_period      = abap_false )
                 WHEN i_field_info-datatype = zcl_ddve_abap_typedescr=>structure_type THEN
                   render_structure_rhs( i_structure     = i_cell
                                         i_field_catalog = simple_field_catalog->get_by_data(
@@ -258,9 +258,9 @@ CLASS zcl_ddve_value_renderer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD add_closing.
-    r_current_context = COND #( WHEN i_dont_add_a_point = abap_true
-                                THEN |{ i_current_context } )|
-                                ELSE |{ i_current_context } ).| ).
+    r_current_context = COND #( WHEN i_add_period = abap_true
+                                THEN |{ i_current_context } ).|
+                                ELSE |{ i_current_context } )| ).
   ENDMETHOD.
 
   METHOD add_error_marker.
@@ -334,10 +334,10 @@ CLASS zcl_ddve_value_renderer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD render_itab_component.
-    r_current_context = render_itab( i_current_context  = ||
-                                     i_table            = i_table
-                                     i_component_name   = i_component_name
-                                     i_dont_add_a_point = abap_true   ).
+    r_current_context = render_itab( i_current_context = ||
+                                     i_table           = i_table
+                                     i_component_name  = i_component_name
+                                     i_add_period      = abap_false   ).
     r_current_context = |{ i_current_context } { r_current_context }|.
   ENDMETHOD.
 

@@ -12,17 +12,17 @@ CLASS zcl_ddve_prettyprinter_factory DEFINITION
       "! Guarantees a usable result: on ANY error during creation or
       "! formatting the unformatted input is returned unchanged.
       "! @parameter i_content | unformatted value #() content
-      "! @parameter r_formated_content | formatted content or (on error) the unformatted input
-      format_with_fallback IMPORTING i_content                 TYPE string
-                           RETURNING VALUE(r_formated_content) TYPE string.
+      "! @parameter r_formatted_content | formatted content or (on error) the unformatted input
+      format_with_fallback IMPORTING i_content                  TYPE string
+                           RETURNING VALUE(r_formatted_content) TYPE string.
 
   PRIVATE SECTION.
     CLASS-DATA: pretty_printer TYPE REF TO zif_ddve_value_pretty_printer,
                 class_names    TYPE string_table.
 
     CLASS-METHODS:
-      get_activ_implementing_classes RETURNING VALUE(r_class_names) TYPE string_table
-                                     RAISING   cx_class_not_existent,
+      get_active_impl_classes RETURNING VALUE(r_class_names) TYPE string_table
+                              RAISING   cx_class_not_existent,
 
       is_given_class_an_active_impl IMPORTING i_classname_to_use            TYPE seoclsname
                                     RETURNING VALUE(r_class_impl_is_active) TYPE boole_d
@@ -49,14 +49,14 @@ CLASS zcl_ddve_prettyprinter_factory IMPLEMENTATION.
 
   METHOD format_with_fallback.
     TRY.
-        r_formated_content = create( )->format( i_content ).
+        r_formatted_content = create( )->format( i_content ).
       CATCH cx_root ##CATCH_ALL.
         " guarantee: any formatting error must fall back to the unformatted content
-        r_formated_content = i_content.
+        r_formatted_content = i_content.
     ENDTRY.
   ENDMETHOD.
 
-  METHOD get_activ_implementing_classes.
+  METHOD get_active_impl_classes.
     IF class_names[] IS INITIAL.
       DATA(oo_interface) = NEW cl_oo_interface( |ZIF_DDVE_VALUE_PRETTY_PRINTER| ).
 
@@ -70,7 +70,7 @@ CLASS zcl_ddve_prettyprinter_factory IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD is_given_class_an_active_impl.
-    class_names = get_activ_implementing_classes( ).
+    class_names = get_active_impl_classes( ).
 
     r_class_impl_is_active = COND boole_d(
         WHEN line_exists( class_names[ table_line = CONV string( i_classname_to_use ) ] )

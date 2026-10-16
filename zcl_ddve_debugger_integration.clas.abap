@@ -80,6 +80,24 @@ CLASS zcl_ddve_debugger_integration DEFINITION
                   cx_tpda_internel_error
                   cx_sy_create_data_error,
 
+      "! fallback for anonymous table types (e.g. inline declared sorted/hashed
+      "! tables, TODO #8): the table type is not creatable, but its line type
+      "! usually is - build a standard table container over the line type
+      create_table_by_line_type
+        IMPORTING i_variable_name          TYPE string
+        RETURNING VALUE(r_empty_table_ref) TYPE REF TO data
+        RAISING   cx_tpda_sys_symb
+                  cx_tpda_varname
+                  cx_tpda_internel_error
+                  cx_sy_create_data_error,
+
+      "! pure operation: create an empty standard table over the given line type
+      "! (keys are irrelevant for rendering purposes)
+      create_table_for_line
+        IMPORTING i_line_descr             TYPE REF TO cl_abap_datadescr
+        RETURNING VALUE(r_empty_table_ref) TYPE REF TO data
+        RAISING   cx_sy_create_data_error,
+
       fill_empty_data_from_xml
         IMPORTING i_xml                              TYPE string
                   i_empty_data_structure_ref         TYPE REF TO data
@@ -207,6 +225,37 @@ CLASS zcl_ddve_debugger_integration IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD create_table_by_line_type.
+    " the line symbol NAME[1] only exists for tables - for structures this
+    " raises and the caller falls back to the component based rebuild
+    DATA(line_abs_type_name) = get_abs_type_name( |{ i_variable_name }[1]| ).
+
+    cl_abap_typedescr=>describe_by_name( EXPORTING  p_name         = line_abs_type_name
+                                         RECEIVING  p_descr_ref    = DATA(line_descr)
+                                         EXCEPTIONS type_not_found = 1
+                                                    OTHERS         = 2 ).
+    IF sy-subrc <> 0.
+      " line type itself is anonymous: rebuild the line from its components
+      DATA(line_ref) = create_structure_by_components(
+                           i_variable_name = |{ i_variable_name }[1]|
+                           i_xml           = get_data_as_readable_xml( |{ i_variable_name }[1]| ) ).
+      line_descr = cl_abap_typedescr=>describe_by_data_ref( line_ref ).
+    ENDIF.
+
+    r_empty_table_ref = create_table_for_line( CAST cl_abap_datadescr( line_descr ) ).
+  ENDMETHOD.
+
+
+  METHOD create_table_for_line.
+    TRY.
+        DATA(table_descr) = cl_abap_tabledescr=>create( i_line_descr ).
+        CREATE DATA r_empty_table_ref TYPE HANDLE table_descr.
+      CATCH cx_sy_table_creation.
+        RAISE EXCEPTION TYPE cx_sy_create_data_error.
+    ENDTRY.
+  ENDMETHOD.
+
+
   METHOD debug_debugger_if_needed.
     IF sy-datum = '20260603' AND sy-uname = 'DEVELOPER'.
 *    BREAK-POINT ##NEEDED.
@@ -271,10 +320,14 @@ CLASS zcl_ddve_debugger_integration IMPLEMENTATION.
     TRY.
         DATA(empty_data_structure_ref) = create_empty_data_structure( i_variable_name  ).
       CATCH cx_sy_create_data_error.
-        " anonymous/object-bound type: rebuild the structure type from its
-        " components instead (TODO #7 fallback)
-        empty_data_structure_ref = create_structure_by_components( i_variable_name = i_variable_name
-                                                                   i_xml           = readable_xml_data ).
+        " anonymous/object-bound type: tables are rebuilt over their line type
+        " (TODO #8), structures from their components (TODO #7)
+        TRY.
+            empty_data_structure_ref = create_table_by_line_type( i_variable_name ).
+          CATCH cx_tpda_sys_symb cx_tpda_varname cx_tpda_internel_error cx_sy_create_data_error.
+            empty_data_structure_ref = create_structure_by_components( i_variable_name = i_variable_name
+                                                                       i_xml           = readable_xml_data ).
+        ENDTRY.
     ENDTRY.
 
     r_content_ref = fill_empty_data_from_xml( i_xml                      = readable_xml_data

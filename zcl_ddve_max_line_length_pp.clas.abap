@@ -363,7 +363,7 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
 
     " an inline declaration DATA(name) on the LHS must not enter the
     " bracket-based block control - keep it verbatim on the first line
-    DATA(content) = i_unformated_value_content.
+    DATA(content) = i_unformatted_value_content.
     FIND REGEX '^DATA\([^)]+\)' IN content MATCH LENGTH DATA(prefix_length).
     IF sy-subrc = 0.
       current_line = substring( val = content
@@ -380,7 +380,7 @@ CLASS zcl_ddve_max_line_length_pp IMPLEMENTATION.
     ENDWHILE.
     reader->close( ).
 
-    r_formated_content = get_lines_as_string( ).
+    r_formatted_content = get_lines_as_string( ).
   ENDMETHOD.
 
   METHOD clear_members.

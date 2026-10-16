@@ -28,11 +28,11 @@ CLASS zcl_ddve_simple_field_catalog DEFINITION
         IMPORTING i_rtti                 TYPE REF TO cl_abap_typedescr
         RETURNING VALUE(r_field_catalog) TYPE lvc_t_fcat,
 
-      get_fieldcat_from_local_type
+      get_fieldcatalog_from_local
         IMPORTING i_rtti                 TYPE REF TO cl_abap_typedescr
         RETURNING VALUE(r_field_catalog) TYPE lvc_t_fcat,
 
-      transform
+      adjust_reference_fields
         CHANGING c_ddic_fields TYPE ddfields OPTIONAL
                  c_ddic_field  TYPE dfies    OPTIONAL,
 
@@ -70,7 +70,7 @@ CLASS zcl_ddve_simple_field_catalog IMPLEMENTATION.
 
     r_field_catalog = COND #( WHEN rtti->is_ddic_type( ) = abap_true
                               THEN me->get_fieldcatalog_from_ddic( rtti )
-                              ELSE me->get_fieldcat_from_local_type( rtti ) ).
+                              ELSE me->get_fieldcatalog_from_local( rtti ) ).
   ENDMETHOD.
 
   METHOD get_by_data.
@@ -88,20 +88,20 @@ CLASS zcl_ddve_simple_field_catalog IMPLEMENTATION.
         ddic_fields = CAST cl_abap_structdescr( i_rtti )->get_ddic_field_list( ).
     ENDCASE.
 
-    transform( CHANGING c_ddic_fields = ddic_fields ).
+    adjust_reference_fields( CHANGING c_ddic_fields = ddic_fields ).
 
     r_field_catalog = map_to_field_catalog( ddic_fields ).
   ENDMETHOD.
 
-  METHOD get_fieldcat_from_local_type.
+  METHOD get_fieldcatalog_from_local.
     " in case it is a local itab, structure or element definition
     CASE i_rtti->kind.
       WHEN i_rtti->kind_elem.
-        APPEND VALUE lvc_s_fcat( LET element_description2 = CAST cl_abap_elemdescr( i_rtti ) IN
-                                 inttype   = element_description2->type_kind
-                                 decimals  = element_description2->decimals
-                                 convexit  = element_description2->edit_mask
-                                 outputlen = element_description2->output_length )
+        APPEND VALUE lvc_s_fcat( LET element_description = CAST cl_abap_elemdescr( i_rtti ) IN
+                                 inttype   = element_description->type_kind
+                                 decimals  = element_description->decimals
+                                 convexit  = element_description->edit_mask
+                                 outputlen = element_description->output_length )
                TO r_field_catalog.
       WHEN i_rtti->kind_struct.
         LOOP AT CAST cl_abap_structdescr( i_rtti )->get_components( ) INTO DATA(component).
@@ -113,7 +113,7 @@ CLASS zcl_ddve_simple_field_catalog IMPLEMENTATION.
                      TO r_field_catalog.
             WHEN 'S'.
               IF component-as_include = abap_true.
-                DATA(include_field_catalog) = get_fieldcat_from_local_type( i_rtti = CAST #( component-type ) ).
+                DATA(include_field_catalog) = get_fieldcatalog_from_local( i_rtti = CAST #( component-type ) ).
                 APPEND LINES OF include_field_catalog TO r_field_catalog.
               ELSE.
                 DATA(structure_description) = CAST cl_abap_structdescr( component-type ).
@@ -146,7 +146,7 @@ CLASS zcl_ddve_simple_field_catalog IMPLEMENTATION.
                                      outputlen = i_element_descr->output_length ).
   ENDMETHOD.
 
-  METHOD transform.
+  METHOD adjust_reference_fields.
     " see CL_SALV_DATA_DESCR=>TRANSFORM
     IF    c_ddic_field-tabname = c_ddic_field-rollname
        OR c_ddic_field-tabname = c_ddic_field-domname.

@@ -11,7 +11,12 @@ ENHANCEMENT 0 Z_TABLE_V_BUILD_SERVICES_MENUE.
         CATCH cx_root INTO DATA(lx_root).
           "could be a header table, try it a different way
           create_real_clone( IMPORTING e_rda_table = DATA(l_zz_rda_table)
-                e_tab_fcat  = zz_field_catalog ).
+                                       e_tab_fcat  = zz_field_catalog ).
+
+          "the debugger ALV clone carries its internal INDEX column -
+          "not part of the real line type, must not be exported
+          DELETE zz_field_catalog WHERE fieldname = 'INDEX'.
+
           ASSIGN l_zz_rda_table->* TO <zz_table>.
         ENDTRY.
 

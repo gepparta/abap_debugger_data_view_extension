@@ -73,13 +73,13 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
                c_regex_text_literal   TYPE string     VALUE `'(?:''|[^'])+'` ##NO_TEXT,
                c_regex_string_literal TYPE string     VALUE '`(?:``|[^`])+`' ##NO_TEXT.
 
-    DATA: steering      TYPE tt_char_offset,
-          offset        TYPE i,
-          text          TYPE string,
-          trace_tab     TYPE TABLE OF ty_trace
-                        WITH NON-UNIQUE SORTED KEY k1 COMPONENTS parent_sync_point terminal offset,
-          sync_points   TYPE TABLE OF ty_sync_point,
-          error_occured TYPE abap_bool.
+    DATA: steering       TYPE tt_char_offset,
+          offset         TYPE i,
+          text           TYPE string,
+          trace_tab      TYPE TABLE OF ty_trace
+                         WITH NON-UNIQUE SORTED KEY k1 COMPONENTS parent_sync_point terminal offset,
+          sync_points    TYPE TABLE OF ty_sync_point,
+          error_occurred TYPE abap_bool.
 
     METHODS: "! <p class="shorttext synchronized" lang="en">assign tries to build this: LHS = RHS</p>
       "!
@@ -241,18 +241,18 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
         DO.
           TRY.
               find_spaces( ).
-              DATA(point2) = set_sync_point( c_terminal-iteration ).
+              DATA(iteration_sync_point) = set_sync_point( c_terminal-iteration ).
               TRY.
                   lhs( ).
                 CATCH lcx_no_match.
-                  cancel_sync_point( point2 ).
+                  cancel_sync_point( iteration_sync_point ).
                   EXIT.
               ENDTRY.
               add_assign_operator( ).
               rhs( ).
               add_to_trace( ).
             CLEANUP.
-              reset_to_sync_point( point2 ).
+              reset_to_sync_point( iteration_sync_point ).
           ENDTRY.
         ENDDO.
         add_to_trace( ).
@@ -412,8 +412,8 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     IF me->offset >= strlen( me->text ).
       RAISE EXCEPTION TYPE lcx_no_match.
     ENDIF.
-    DATA(regex2) = |^{ i_regex }|.
-    FIND FIRST OCCURRENCE OF REGEX regex2 IN me->text+me->offset MATCH LENGTH DATA(length).
+    DATA(anchored_regex) = |^{ i_regex }|.
+    FIND FIRST OCCURRENCE OF REGEX anchored_regex IN me->text+me->offset MATCH LENGTH DATA(length).
     IF sy-subrc = 0.
       offset = offset + length.
     ELSE.
@@ -430,7 +430,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
         assign( ).
       CATCH lcx_parser_interrupt
             lcx_no_match INTO DATA(lx_error) ##NEEDED.
-        error_occured = abap_true.
+        error_occurred = abap_true.
         zcl_ddve_debugger_integration=>debug_debugger_if_needed( ).
     ENDTRY.
   ENDMETHOD.
@@ -492,11 +492,11 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     " number : ^[0-9]+
     "
     " text : ^'(?:''|[^'])+'
-    parse( i_unformated_value_content ).
-    r_formated_content = render( i_unformated_value_content ).
+    parse( i_unformatted_value_content ).
+    r_formatted_content = render( i_unformatted_value_content ).
 
-    IF error_occured = abap_true.
-      r_formated_content = i_unformated_value_content.
+    IF error_occurred = abap_true.
+      r_formatted_content = i_unformatted_value_content.
     ENDIF.
   ENDMETHOD.
 
