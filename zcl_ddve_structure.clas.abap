@@ -64,7 +64,8 @@ CLASS zcl_ddve_structure IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD prepare_output.
-    CHECK i_structure IS NOT INITIAL.
+    " note: an initial structure is rendered on purpose - the generated
+    " DATA(name) = VALUE typ( ). is a valid and useful statement for unit tests
 
     " typed form DATA(name) = VALUE typ( ) only when the debugger symbol name
     " can be turned into a valid variable name - otherwise classic name = VALUE #( )

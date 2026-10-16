@@ -8,7 +8,7 @@ ENDCLASS.
 CLASS ltd_throwing_printer IMPLEMENTATION.
   METHOD zif_ddve_value_pretty_printer~format.
     " simulate an arbitrary runtime error inside a printer implementation
-    RAISE EXCEPTION NEW cx_sy_itab_line_not_found( ).
+    RAISE EXCEPTION TYPE cx_sy_itab_line_not_found.
   ENDMETHOD.
 ENDCLASS.
 
@@ -50,7 +50,7 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
     " GIVEN - ...
 
     " WHEN
-    FINAL(classes) = zcl_ddve_prettyprinter_factory=>get_activ_implementing_classes( ).
+    DATA(classes) = zcl_ddve_prettyprinter_factory=>get_activ_implementing_classes( ).
 
     " THEN
     cl_abap_unit_assert=>assert_table_contains(
@@ -66,12 +66,12 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
         ( user_name = sy-uname  class_name = |ZCL_DDVE_VALUE_PRETTY_PRINTER| ) ) ).
 
     " WHEN
-    FINAL(pretty_printer) = zcl_ddve_prettyprinter_factory=>create( ).
+    DATA(pretty_printer) = zcl_ddve_prettyprinter_factory=>create( ).
 
     " THEN
     TRY.
-        FINAL(must_be_pretty_printer) = CAST zcl_ddve_value_pretty_printer( pretty_printer ).
-      CATCH cx_sy_move_cast_error INTO FINAL(error).
+        DATA(must_be_pretty_printer) = CAST zcl_ddve_value_pretty_printer( pretty_printer ).
+      CATCH cx_sy_move_cast_error INTO DATA(error).
         cl_abap_unit_assert=>fail(
             msg = |Standard class ZCL_DDVE_VALUE_PRETTY_PRINTER was not used in factory but should have been. Error is { error->get_longtext( ) }| ).
     ENDTRY.
@@ -80,10 +80,10 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
   METHOD fall_back_on_printer_error.
     " GIVEN - a printer that fails with an undeclared dynamic exception
     zcl_ddve_pret_printer_injector=>inject_pretty_printer( NEW ltd_throwing_printer( ) ).
-    FINAL(unformated_content) = `X = VALUE #( ( COL1 = 1 ) ).`.
+    DATA(unformated_content) = `X = VALUE #( ( COL1 = 1 ) ).`.
 
     " WHEN
-    FINAL(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( unformated_content ).
+    DATA(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( unformated_content ).
 
     " THEN
     cl_abap_unit_assert=>assert_equals(
@@ -97,7 +97,7 @@ CLASS ltcl_pp_factory_should IMPLEMENTATION.
     zcl_ddve_pret_printer_injector=>inject_pretty_printer( NEW ltd_fake_printer( ) ).
 
     " WHEN
-    FINAL(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( `X = VALUE #( ).` ).
+    DATA(result) = zcl_ddve_prettyprinter_factory=>format_with_fallback( `X = VALUE #( ).` ).
 
     " THEN
     cl_abap_unit_assert=>assert_equals(

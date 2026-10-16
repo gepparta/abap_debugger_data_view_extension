@@ -106,8 +106,8 @@ CLASS zcl_ddve_type_resolver IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD is_valid_identifier.
-    r_is_valid = xsdbool( matches( val  = i_name
-                                   pcre = `(/[A-Z0-9_]{1,8}/)?[A-Z_][A-Z0-9_]*` ) ).
+    r_is_valid = xsdbool( matches( val   = i_name
+                                   regex = `(/[A-Z0-9_]{1,8}/)?[A-Z_][A-Z0-9_]*` ) ).
   ENDMETHOD.
 
   METHOD derive_variable_name.

@@ -128,13 +128,13 @@ CLASS ltcl_typed_value_should IMPLEMENTATION.
 
   METHOD format_typed_table.
     " given
-    FINAL(input) = |DATA(TABLE_OF_INTEGERS) = VALUE STD_INT_TABLE( ( 1 ) ( 2 ) ).|.
+    DATA(input) = |DATA(TABLE_OF_INTEGERS) = VALUE STD_INT_TABLE( ( 1 ) ( 2 ) ).|.
 
     " when
-    FINAL(formated_string) = cut->format( input ).
+    DATA(formated_string) = cut->format( input ).
 
     " then
-    FINAL(expected) = concat_lines_of( table = VALUE string_table( ( |DATA(TABLE_OF_INTEGERS) = VALUE STD_INT_TABLE(| )
+    DATA(expected) = concat_lines_of( table = VALUE string_table( ( |DATA(TABLE_OF_INTEGERS) = VALUE STD_INT_TABLE(| )
                                                                    ( |         (| )
                                                                    ( |                 1 )| )
                                                                    ( |         (| )
@@ -148,13 +148,13 @@ CLASS ltcl_typed_value_should IMPLEMENTATION.
 
   METHOD format_typed_structure.
     " given
-    FINAL(input) = |DATA(S) = VALUE SFLIGHT( CARRID = 'AA' ).|.
+    DATA(input) = |DATA(S) = VALUE SFLIGHT( CARRID = 'AA' ).|.
 
     " when
-    FINAL(formated_string) = cut->format( input ).
+    DATA(formated_string) = cut->format( input ).
 
     " then
-    FINAL(expected) = concat_lines_of( table = VALUE string_table( ( |DATA(S) = VALUE SFLIGHT(| )
+    DATA(expected) = concat_lines_of( table = VALUE string_table( ( |DATA(S) = VALUE SFLIGHT(| )
                                                                    ( |         CARRID = 'AA'| )
                                                                    ( |         ).| ) )
                                        sep   = |\n| ).
@@ -165,13 +165,13 @@ CLASS ltcl_typed_value_should IMPLEMENTATION.
 
   METHOD format_typed_class_type.
     " given
-    FINAL(input) = |DATA(ITEM) = VALUE ZCL_ORDER=>TY_ITEM( COL1 = 1 ).|.
+    DATA(input) = |DATA(ITEM) = VALUE ZCL_ORDER=>TY_ITEM( COL1 = 1 ).|.
 
     " when
-    FINAL(formated_string) = cut->format( input ).
+    DATA(formated_string) = cut->format( input ).
 
     " then
-    FINAL(expected) = concat_lines_of( table = VALUE string_table( ( |DATA(ITEM) = VALUE ZCL_ORDER=>TY_ITEM(| )
+    DATA(expected) = concat_lines_of( table = VALUE string_table( ( |DATA(ITEM) = VALUE ZCL_ORDER=>TY_ITEM(| )
                                                                    ( |         COL1 = 1| )
                                                                    ( |         ).| ) )
                                        sep   = |\n| ).
@@ -182,10 +182,10 @@ CLASS ltcl_typed_value_should IMPLEMENTATION.
 
   METHOD format_typed_empty_value.
     " given
-    FINAL(input) = |MY_VAR = VALUE SFLIGHT( ).|.
+    DATA(input) = |MY_VAR = VALUE SFLIGHT( ).|.
 
     " when
-    FINAL(result) = cut->format( input ).
+    DATA(result) = cut->format( input ).
 
     " then
     cl_abap_unit_assert=>assert_equals( exp = |MY_VAR = VALUE SFLIGHT( ).|
@@ -203,13 +203,13 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD add_indent.
     " GIVEN
-    FINAL(input) = |IS_NESTED_STRUCTURE = VALUE #( COL1 = '1' COL2 = VALUE #( COL1 = '1' COL2 = '2' ) COL3 = '3' COL4 = VALUE #( COL1 = '1' COL2 = '2' ) ).|.
+    DATA(input) = |IS_NESTED_STRUCTURE = VALUE #( COL1 = '1' COL2 = VALUE #( COL1 = '1' COL2 = '2' ) COL3 = '3' COL4 = VALUE #( COL1 = '1' COL2 = '2' ) ).|.
 
     " WHEN
-    FINAL(formated_string) = cut->format( input ).
+    DATA(formated_string) = cut->format( input ).
 
     " THEN
-    FINAL(expected) = concat_lines_of( table = VALUE string_table( ( |IS_NESTED_STRUCTURE = VALUE #(| )
+    DATA(expected) = concat_lines_of( table = VALUE string_table( ( |IS_NESTED_STRUCTURE = VALUE #(| )
                                                                    ( |         COL1 = '1'| )
                                                                    ( |         COL2 = VALUE #(| )
                                                                    ( |                 COL1 = '1'| )
@@ -229,13 +229,13 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD format_table_of_integers.
     " GIVEN
-    FINAL(input) = |TABLE_OF_INTEGERS = VALUE #( ( 1 ) ( 2 ) ).|.
+    DATA(input) = |TABLE_OF_INTEGERS = VALUE #( ( 1 ) ( 2 ) ).|.
 
     " WHEN
-    FINAL(formated_string) = cut->format( input ).
+    DATA(formated_string) = cut->format( input ).
 
     " THEN
-    FINAL(expected) = concat_lines_of( table = VALUE string_table( ( |TABLE_OF_INTEGERS = VALUE #(| )
+    DATA(expected) = concat_lines_of( table = VALUE string_table( ( |TABLE_OF_INTEGERS = VALUE #(| )
                                                                    ( |         (| )
                                                                    ( |                 1 )| )
                                                                    ( |         (| )
@@ -249,13 +249,13 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD format_table_in_structure.
     " GIVEN
-    FINAL(input) = |TABLE_IN_STRUCTURE = VALUE #( TABLE = VALUE #( ( COL1 = '1' COL2 = '2' ) ( COL1 = '3' COL2 = '4' ) ) ).|.
+    DATA(input) = |TABLE_IN_STRUCTURE = VALUE #( TABLE = VALUE #( ( COL1 = '1' COL2 = '2' ) ( COL1 = '3' COL2 = '4' ) ) ).|.
 
     " WHEN
-    FINAL(formated_string) = cut->format( input ).
+    DATA(formated_string) = cut->format( input ).
 
     " THEN
-    FINAL(expected) = concat_lines_of( table = VALUE string_table( ( |TABLE_IN_STRUCTURE = VALUE #(| )
+    DATA(expected) = concat_lines_of( table = VALUE string_table( ( |TABLE_IN_STRUCTURE = VALUE #(| )
                                                                    ( |         TABLE = VALUE #(| )
                                                                    ( |                 (| )
                                                                    ( |                         COL1 = '1'| )
@@ -275,14 +275,14 @@ CLASS ltcl_pretty_printer_should IMPLEMENTATION.
 
   METHOD still_be_fast.
     " GIVEN
-    FINAL(input) = |TABLE_IN_STRUCTURE = VALUE #(|
+    DATA(input) = |TABLE_IN_STRUCTURE = VALUE #(|
                    && repeat( val = | ( COL1 = '1' COL2 = '2' )|
                               occ = 2000 )
                    && | ).|.
 
     " WHEN
     " TODO: variable is assigned but never used (ABAP cleaner)
-    FINAL(formated_string) = cut->format( input ).
+    DATA(formated_string) = cut->format( input ).
 
     " THEN
     " method should take less than DURATION SHORT
@@ -335,9 +335,9 @@ CLASS ltcl_pp_performance_should IMPLEMENTATION.
 
     " THEN the pretty-printing should last not too long!
 
-    FINAL(formated_string) = NEW zcl_ddve_value_pretty_printer( )->format( input ).
+    DATA(formated_string) = NEW zcl_ddve_value_pretty_printer( )->format( input ).
 
-    FINAL(exp) = |MAIN_RECORD_TABLE = VALUE #(\n|
+    DATA(exp) = |MAIN_RECORD_TABLE = VALUE #(\n|
         && repeat(
             occ = occ
             val = |         (\n| &
@@ -594,15 +594,15 @@ CLASS ltcl_format_edge_cases IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD format_empty_input.
-    FINAL(input) = ``.
-    FINAL(result) = cut->format( input ).
+    DATA(input) = ``.
+    DATA(result) = cut->format( input ).
     cl_abap_unit_assert=>assert_initial( act = result
                                          msg = `Empty input must produce empty output (trace_tab stays empty)` ).
   ENDMETHOD.
 
   METHOD format_unparseable_input.
-    FINAL(input) = `garbage without value operator`.
-    FINAL(result) = cut->format( input ).
+    DATA(input) = `garbage without value operator`.
+    DATA(result) = cut->format( input ).
     " fallback contract: on parse errors the original input is returned unchanged
     cl_abap_unit_assert=>assert_equals( exp = input
                                         act = result
@@ -610,40 +610,40 @@ CLASS ltcl_format_edge_cases IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD format_number_rhs.
-    FINAL(input) = |MY_VAR = 42.|.
-    FINAL(result) = cut->format( input ).
+    DATA(input) = |MY_VAR = 42.|.
+    DATA(result) = cut->format( input ).
     cl_abap_unit_assert=>assert_equals( exp = |MY_VAR = 42.|
                                         act = result
                                         msg = `Number RHS must be preserved as single line` ).
   ENDMETHOD.
 
   METHOD format_text_literal_rhs.
-    FINAL(input) = |MY_VAR = 'abc'.|.
-    FINAL(result) = cut->format( input ).
+    DATA(input) = |MY_VAR = 'abc'.|.
+    DATA(result) = cut->format( input ).
     cl_abap_unit_assert=>assert_equals( exp = |MY_VAR = 'abc'.|
                                         act = result
                                         msg = `Text literal RHS must be preserved as single line` ).
   ENDMETHOD.
 
   METHOD format_string_literal_rhs.
-    FINAL(input) = `MY_VAR = ``abc``.`.
-    FINAL(result) = cut->format( input ).
+    DATA(input) = `MY_VAR = ``abc``.`.
+    DATA(result) = cut->format( input ).
     cl_abap_unit_assert=>assert_equals( exp = input
                                         act = result
                                         msg = `String literal (backticks) RHS must be preserved` ).
   ENDMETHOD.
 
   METHOD format_empty_value_operator.
-    FINAL(input) = |MY_VAR = VALUE #( ).|.
-    FINAL(result) = cut->format( input ).
+    DATA(input) = |MY_VAR = VALUE #( ).|.
+    DATA(result) = cut->format( input ).
     cl_abap_unit_assert=>assert_equals( exp = |MY_VAR = VALUE #( ).|
                                         act = result
                                         msg = `Empty VALUE #( ) must stay on a single line` ).
   ENDMETHOD.
 
   METHOD format_apostroph_in_literal.
-    FINAL(input) = |MY_VAR = 'it''s'.|.
-    FINAL(result) = cut->format( input ).
+    DATA(input) = |MY_VAR = 'it''s'.|.
+    DATA(result) = cut->format( input ).
     cl_abap_unit_assert=>assert_equals( exp = |MY_VAR = 'it''s'.|
                                         act = result
                                         msg = `Apostroph escape in text literal must be preserved verbatim` ).

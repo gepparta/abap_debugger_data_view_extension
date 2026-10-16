@@ -19,31 +19,9 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
              char      TYPE c LENGTH 1,
            END OF t_char_offset,
            tt_char_offset TYPE STANDARD TABLE OF t_char_offset WITH DEFAULT KEY,
-           BEGIN OF ENUM enum_terminal STRUCTURE c_terminal,
-             assign,
-             rhs,
-             empty,
-             struct,
-             struct2,
-             iteration,
-             table,
-             rhs2,
-             symbolname,
-             number,
-             non_terminal,
-             text_literal,
-             string_literal,
-             spaces,
-           END OF ENUM enum_terminal STRUCTURE c_terminal,
-           BEGIN OF ENUM enum_sub_terminal STRUCTURE c_sub_terminal,
-             na,                " not applicable
-             assign_operator,   " =
-             value_operator,    " VALUE #( or VALUE typename(
-             parenthesis_open,  " (
-             parenthesis_close, " )
-             empty_line,        " ( )
-             end_of_statement,  " .
-           END OF ENUM enum_sub_terminal STRUCTURE c_sub_terminal,
+           " 7.40 compatibility: plain integer types + constant structures instead of ENUM
+           enum_terminal     TYPE i,
+           enum_sub_terminal TYPE i,
            BEGIN OF ty_trace,
              parent_sync_point TYPE i,
              terminal          TYPE enum_terminal,
@@ -59,6 +37,32 @@ CLASS zcl_ddve_value_pretty_printer DEFINITION
              offset       TYPE i,
              trace_index  TYPE i,
            END OF ty_sync_point.
+
+    CONSTANTS: BEGIN OF c_terminal,
+                 assign         TYPE enum_terminal VALUE 0,
+                 rhs            TYPE enum_terminal VALUE 1,
+                 empty          TYPE enum_terminal VALUE 2,
+                 struct         TYPE enum_terminal VALUE 3,
+                 struct2        TYPE enum_terminal VALUE 4,
+                 iteration      TYPE enum_terminal VALUE 5,
+                 table          TYPE enum_terminal VALUE 6,
+                 rhs2           TYPE enum_terminal VALUE 7,
+                 symbolname     TYPE enum_terminal VALUE 8,
+                 number         TYPE enum_terminal VALUE 9,
+                 non_terminal   TYPE enum_terminal VALUE 10,
+                 text_literal   TYPE enum_terminal VALUE 11,
+                 string_literal TYPE enum_terminal VALUE 12,
+                 spaces         TYPE enum_terminal VALUE 13,
+               END OF c_terminal,
+               BEGIN OF c_sub_terminal,
+                 na                TYPE enum_sub_terminal VALUE 0, " not applicable
+                 assign_operator   TYPE enum_sub_terminal VALUE 1, " =
+                 value_operator    TYPE enum_sub_terminal VALUE 2, " VALUE #( or VALUE typename(
+                 parenthesis_open  TYPE enum_sub_terminal VALUE 3, " (
+                 parenthesis_close TYPE enum_sub_terminal VALUE 4, " )
+                 empty_line        TYPE enum_sub_terminal VALUE 5, " ( )
+                 end_of_statement  TYPE enum_sub_terminal VALUE 6, " .
+               END OF c_sub_terminal.
 
     CONSTANTS: c_newline              TYPE abap_char1 VALUE cl_abap_char_utilities=>cr_lf,
                " LHS: plain symbol name, inline declaration DATA(name) or field symbol <name>
@@ -155,7 +159,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     " assign tries to build this: LHS = RHS
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( i_terminal = c_terminal-assign ).
+        DATA(current_sync_point_index) = set_sync_point( i_terminal = c_terminal-assign ).
         lhs( ).
         add_assign_operator( ).
         rhs( ).
@@ -169,7 +173,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
   METHOD rhs.
     " RHS could be : number | text | string | empty | struct | table
     find_spaces( ).
-    FINAL(current_sync_point_index) = set_sync_point( c_terminal-rhs ).
+    DATA(current_sync_point_index) = set_sync_point( c_terminal-rhs ).
     TRY.
         TRY.
             add_number( ).
@@ -202,7 +206,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     " empty : 'VALUE #|typ( )'
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( c_terminal-empty ).
+        DATA(current_sync_point_index) = set_sync_point( c_terminal-empty ).
         set_offset_for_regex( c_regex_value_operator && ` \)` ).
         add_to_trace( ).
       CLEANUP.
@@ -214,7 +218,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     " struct : 'VALUE #|typ(' struct2 ')'
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( c_terminal-struct ).
+        DATA(current_sync_point_index) = set_sync_point( c_terminal-struct ).
         add_value_open_operator( ).
         add_structure_content( ).
         add_parenthesis_close( ).
@@ -228,7 +232,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     " struct2 : ( LHS '=' RHS )+
     TRY.
         find_spaces( ).
-        FINAL(structure_sync_point_index) = set_sync_point( c_terminal-struct2 ).
+        DATA(structure_sync_point_index) = set_sync_point( c_terminal-struct2 ).
         set_sync_point( c_terminal-iteration ).
         lhs( ).
         add_assign_operator( ).
@@ -237,7 +241,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
         DO.
           TRY.
               find_spaces( ).
-              FINAL(point2) = set_sync_point( c_terminal-iteration ).
+              DATA(point2) = set_sync_point( c_terminal-iteration ).
               TRY.
                   lhs( ).
                 CATCH lcx_no_match.
@@ -261,7 +265,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     " table : 'VALUE #|typ(' ( '( )' | ( '(' inner_rhs ')' )+ ) ')'
     TRY.
         find_spaces( ).
-        FINAL(outer_sync_point) = set_sync_point( c_terminal-table ).
+        DATA(outer_sync_point) = set_sync_point( c_terminal-table ).
         add_value_open_operator( ).
         TRY.
             add_empty_line( ).
@@ -269,7 +273,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
             DO.
               TRY.
                   find_spaces( ).
-                  FINAL(inner_sync_point) = set_sync_point( c_terminal-iteration ).
+                  DATA(inner_sync_point) = set_sync_point( c_terminal-iteration ).
                   TRY.
                       add_parenthesis_open( ).
                     CATCH lcx_no_match.
@@ -295,7 +299,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     " inner_rhs : number | text | string | empty | struct2
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( c_terminal-rhs2 ).
+        DATA(current_sync_point_index) = set_sync_point( c_terminal-rhs2 ).
         TRY.
             add_number( ).
           CATCH lcx_no_match.
@@ -322,7 +326,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
   METHOD lhs.
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( c_terminal-symbolname ).
+        DATA(current_sync_point_index) = set_sync_point( c_terminal-symbolname ).
         " SCALAR
         " STRUCTURE
         " TABLE
@@ -345,7 +349,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
   METHOD add_number.
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( c_terminal-number ).
+        DATA(current_sync_point_index) = set_sync_point( c_terminal-number ).
         set_offset_for_regex( c_regex_number ).
         add_to_trace( ).
       CLEANUP.
@@ -356,8 +360,8 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
   METHOD non_terminal.
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( i_terminal     = c_terminal-non_terminal
-                                                          i_sub_terminal = i_sub_terminal ).
+        DATA(current_sync_point_index) = set_sync_point( i_terminal     = c_terminal-non_terminal
+                                                         i_sub_terminal = i_sub_terminal ).
         set_offset_for_regex( i_regex ).
         add_to_trace( ).
       CLEANUP.
@@ -368,7 +372,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
   METHOD add_text_literal.
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( c_terminal-text_literal ).
+        DATA(current_sync_point_index) = set_sync_point( c_terminal-text_literal ).
         set_offset_for_regex( c_regex_text_literal ).
         add_to_trace( ).
       CLEANUP.
@@ -379,7 +383,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
   METHOD add_string_literal.
     TRY.
         find_spaces( ).
-        FINAL(current_sync_point_index) = set_sync_point( c_terminal-string_literal ).
+        DATA(current_sync_point_index) = set_sync_point( c_terminal-string_literal ).
         set_offset_for_regex( c_regex_string_literal ).
         add_to_trace( ).
       CLEANUP.
@@ -391,7 +395,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     IF me->offset >= strlen( me->text ).
       RETURN.
     ENDIF.
-    FIND FIRST OCCURRENCE OF REGEX '^\s+' IN me->text+me->offset MATCH LENGTH FINAL(length).
+    FIND FIRST OCCURRENCE OF REGEX '^\s+' IN me->text+me->offset MATCH LENGTH DATA(length).
     IF sy-subrc = 0.
       APPEND VALUE ty_trace( sync_point        = 0
                              parent_sync_point = 0
@@ -400,20 +404,20 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
                              offset            = offset
                              length            = length )
              TO me->trace_tab.
-      offset += length.
+      offset = offset + length.
     ENDIF.
   ENDMETHOD.
 
   METHOD set_offset_for_regex.
     IF me->offset >= strlen( me->text ).
-      RAISE EXCEPTION NEW lcx_no_match( ).
+      RAISE EXCEPTION TYPE lcx_no_match.
     ENDIF.
-    FINAL(regex2) = |^{ i_regex }|.
-    FIND FIRST OCCURRENCE OF REGEX regex2 IN me->text+me->offset MATCH LENGTH FINAL(length).
+    DATA(regex2) = |^{ i_regex }|.
+    FIND FIRST OCCURRENCE OF REGEX regex2 IN me->text+me->offset MATCH LENGTH DATA(length).
     IF sy-subrc = 0.
-      offset += length.
+      offset = offset + length.
     ELSE.
-      RAISE EXCEPTION NEW lcx_no_match( ).
+      RAISE EXCEPTION TYPE lcx_no_match.
     ENDIF.
   ENDMETHOD.
 
@@ -425,7 +429,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     TRY.
         assign( ).
       CATCH lcx_parser_interrupt
-            lcx_no_match INTO FINAL(lx_error) ##NEEDED.
+            lcx_no_match INTO DATA(lx_error) ##NEEDED.
         error_occured = abap_true.
         zcl_ddve_debugger_integration=>debug_debugger_if_needed( ).
     ENDTRY.
@@ -433,7 +437,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
 
   METHOD render.
     DATA(indent) = 0.
-    FINAL(indent_step) = 8.
+    DATA(indent_step) = 8.
     DATA(indent_spaces) = repeat( val = ` `
                                   occ = indent ).
 
@@ -455,12 +459,12 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
         r_result = |{ r_result }\n{ indent_spaces }|.
       ELSEIF    trace_line->sub_terminal = c_sub_terminal-value_operator
              OR trace_line->sub_terminal = c_sub_terminal-parenthesis_open.
-        indent += indent_step.
+        indent = indent + indent_step.
         indent_spaces = indent_spaces && repeat( val = ` `
                                                  occ = indent_step ).
         r_result = |{ r_result }\n{ indent_spaces }|.
       ELSEIF trace_line->sub_terminal = c_sub_terminal-parenthesis_close.
-        indent -= indent_step.
+        indent = indent - indent_step.
         SHIFT indent_spaces LEFT BY indent_step PLACES.
       ENDIF.
     ENDLOOP.
@@ -508,7 +512,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
            TO me->trace_tab.
     DELETE me->sync_points INDEX lines( me->sync_points ).
     IF 0 = 1.
-      RAISE EXCEPTION NEW lcx_parser_interrupt( ).
+      RAISE EXCEPTION TYPE lcx_parser_interrupt.
     ENDIF.
   ENDMETHOD.
 
@@ -526,7 +530,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     offset = sync_points[ i_sync_point_index ]-offset.
     DELETE me->sync_points FROM i_sync_point_index.
     IF 0 = 1.
-      RAISE EXCEPTION NEW lcx_parser_interrupt( ).
+      RAISE EXCEPTION TYPE lcx_parser_interrupt.
     ENDIF.
   ENDMETHOD.
 
@@ -534,7 +538,7 @@ CLASS zcl_ddve_value_pretty_printer IMPLEMENTATION.
     DELETE me->trace_tab FROM me->sync_points[ i_sync_point_index ]-trace_index + 1.
     DELETE me->sync_points FROM i_sync_point_index.
     IF 0 = 1.
-      RAISE EXCEPTION NEW lcx_parser_interrupt( ).
+      RAISE EXCEPTION TYPE lcx_parser_interrupt.
     ENDIF.
   ENDMETHOD.
 

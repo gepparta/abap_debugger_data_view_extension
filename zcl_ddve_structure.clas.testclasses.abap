@@ -11,7 +11,9 @@ CLASS ltc_struc_enh_should_process DEFINITION FOR TESTING DURATION SHORT  RISK L
       itab_in_structure FOR TESTING,
       include_in_structure FOR TESTING,
       typed_structure FOR TESTING,
-      fallback_on_invalid_name FOR TESTING.
+      fallback_on_invalid_name FOR TESTING,
+      empty_structure_untyped FOR TESTING,
+      empty_structure_typed FOR TESTING.
 ENDCLASS.       "ltc_aunit_debugger_struc_enh
 
 
@@ -228,6 +230,39 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
     cl_abap_unit_assert=>assert_equals( act = content
                                         exp = |LS_FLIGHT-PRICE = VALUE #( COL1 = 1 COL2 = 2 ).|
                                         msg = 'Invalid variable name must fall back to the untyped form' ).
+  ENDMETHOD.
+
+  METHOD empty_structure_untyped.
+    " given
+    DATA empty_flight TYPE sflight.
+
+    " when
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output(
+                        i_structure     = empty_flight
+                        i_field_catalog = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = empty_flight )
+                        i_struc_name    = |EMPTY_FLIGHT| ).
+
+    " then
+    cl_abap_unit_assert=>assert_equals( act = content
+                                        exp = |EMPTY_FLIGHT = VALUE #( ).|
+                                        msg = 'Empty structure must still render the VALUE statement' ).
+  ENDMETHOD.
+
+  METHOD empty_structure_typed.
+    " given
+    DATA empty_flight TYPE sflight.
+
+    " when
+    DATA(content) = NEW zcl_ddve_structure( )->prepare_output(
+                        i_structure     = empty_flight
+                        i_field_catalog = NEW zcl_ddve_simple_field_catalog( )->get_by_data( i_structure = empty_flight )
+                        i_struc_name    = |EMPTY_FLIGHT|
+                        i_type_name     = |SFLIGHT| ).
+
+    " then
+    cl_abap_unit_assert=>assert_equals( act = content
+                                        exp = |DATA(EMPTY_FLIGHT) = VALUE SFLIGHT( ).|
+                                        msg = 'Empty typed structure must render DATA(name) = VALUE typ( ).' ).
   ENDMETHOD.
 
 ENDCLASS.

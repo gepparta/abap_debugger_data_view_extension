@@ -163,6 +163,15 @@ CLASS zcl_ddve_value_renderer IMPLEMENTATION.
                                                                    i_field_catalog = field_catalog ) ).
         ENDLOOP.
 
+        " an empty table never enters the loop - the prefix must still be rendered
+        IF line_num = 0.
+          r_current_context = add_prefix( i_current_context = r_current_context
+                                          i_table_title     = i_table_title
+                                          i_component_name  = i_component_name
+                                          i_type_name       = i_type_name
+                                          i_tabix           = 1 ).
+        ENDIF.
+
         r_current_context = add_closing( i_current_context  = r_current_context
                                          i_dont_add_a_point = i_dont_add_a_point ).
 

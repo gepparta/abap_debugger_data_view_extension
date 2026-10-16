@@ -12,12 +12,15 @@ CLASS zcl_ddve_debugger_integration DEFINITION
     "! @raising cx_tpda_sys_symb |
     "! @raising cx_tpda_varname |
     "! @raising cx_tpda_internel_error |
+    "! @raising cx_sy_create_data_error | variable type cannot be re-created in the
+    "!                                    debugger session (e.g. anonymous %_T... types)
     METHODS get_ref_to_any_content
       IMPORTING i_variable_name      TYPE string
       RETURNING VALUE(r_content_ref) TYPE REF TO data
       RAISING   cx_tpda_sys_symb
                 cx_tpda_varname
-                cx_tpda_internel_error.
+                cx_tpda_internel_error
+                cx_sy_create_data_error.
 
     "! Get the absolute type name of a debugger variable (TPDA varabstypename)
     "! @parameter i_variable_name | Name of the variable in the debugger
@@ -56,7 +59,26 @@ CLASS zcl_ddve_debugger_integration DEFINITION
         RETURNING VALUE(r_empty_data_structure_ref) TYPE REF TO data
         RAISING   cx_tpda_sys_symb
                   cx_tpda_varname
-                  cx_tpda_internel_error,
+                  cx_tpda_internel_error
+                  cx_sy_create_data_error,
+
+      "! extract the top-level component names from the asXML of a structure
+      "! (pure operation - no debugger required)
+      get_component_names_from_xml
+        IMPORTING i_xml                    TYPE string
+        RETURNING VALUE(r_component_names) TYPE string_table,
+
+      "! fallback for anonymous/object-bound types (\TYPE=%_T...O...): rebuild the
+      "! structure type from its components - their types are usually named and
+      "! therefore reconstructable in the debugger session
+      create_structure_by_components
+        IMPORTING i_variable_name                   TYPE string
+                  i_xml                             TYPE string
+        RETURNING VALUE(r_empty_data_structure_ref) TYPE REF TO data
+        RAISING   cx_tpda_sys_symb
+                  cx_tpda_varname
+                  cx_tpda_internel_error
+                  cx_sy_create_data_error,
 
       fill_empty_data_from_xml
         IMPORTING i_xml                              TYPE string
@@ -105,7 +127,83 @@ CLASS zcl_ddve_debugger_integration IMPLEMENTATION.
   METHOD create_empty_data_structure.
     DATA(abs_type_name) = get_abs_type_name( i_variable_name ).
 
+    " fails with CX_SY_CREATE_DATA_ERROR for anonymous/object-bound type names
+    " (e.g. \TYPE=%_T...O...) that only exist inside the debugged session
     CREATE DATA r_empty_data_structure_ref TYPE (abs_type_name).  " RTTC - dynamic creation of  elementary data object
+  ENDMETHOD.
+
+
+  METHOD get_component_names_from_xml.
+    DATA last_node_name TYPE string.
+
+    DATA(ixml)           = cl_ixml=>create( ).
+    DATA(stream_factory) = ixml->create_stream_factory( ).
+    DATA(document)       = ixml->create_document( ).
+
+    IF ixml->create_parser( document       = document
+                            stream_factory = stream_factory
+                            istream        = stream_factory->create_istream_string( i_xml )
+                            )->parse( ) <> 0.
+      RETURN.
+    ENDIF.
+
+    " walk to the data root element: asx:abap / asx:values / <data root>
+    DATA(node_element_filter) = document->create_filter_node_type( node_types = if_ixml_node=>co_node_element ).
+    DATA(iterator) = document->create_iterator_filtered( filter = node_element_filter ).
+
+    DATA(data_root_node) = iterator->get_next( ).
+    WHILE data_root_node IS BOUND.
+      IF last_node_name = |values|.
+        EXIT. " data_root_node now is the element below asx:values
+      ENDIF.
+      last_node_name  = data_root_node->get_name( ).
+      data_root_node  = iterator->get_next( ).
+    ENDWHILE.
+    CHECK data_root_node IS BOUND.
+
+    " its direct children are the top-level components of the structure
+    DATA(component_node) = data_root_node->get_first_child( ).
+    WHILE component_node IS BOUND.
+      IF component_node->get_type( ) = if_ixml_node=>co_node_element.
+        APPEND component_node->get_name( ) TO r_component_names.
+      ENDIF.
+      component_node = component_node->get_next( ).
+    ENDWHILE.
+  ENDMETHOD.
+
+
+  METHOD create_structure_by_components.
+    DATA components TYPE abap_component_tab.
+
+    DATA(component_names) = get_component_names_from_xml( i_xml ).
+
+    LOOP AT component_names INTO DATA(component_name).
+      DATA(component_abs_type) = get_abs_type_name( |{ i_variable_name }-{ component_name }| ).
+
+      cl_abap_typedescr=>describe_by_name( EXPORTING  p_name         = component_abs_type
+                                           RECEIVING  p_descr_ref    = DATA(component_descr)
+                                           EXCEPTIONS type_not_found = 1
+                                                      OTHERS         = 2 ).
+      IF sy-subrc <> 0.
+        " component type itself is not reconstructable - give up like before
+        RAISE EXCEPTION TYPE cx_sy_create_data_error.
+      ENDIF.
+
+      APPEND VALUE abap_componentdescr( name = component_name
+                                        type = CAST cl_abap_datadescr( component_descr ) )
+             TO components.
+    ENDLOOP.
+
+    IF components IS INITIAL.
+      RAISE EXCEPTION TYPE cx_sy_create_data_error.
+    ENDIF.
+
+    TRY.
+        DATA(struct_descr) = cl_abap_structdescr=>create( components ).
+        CREATE DATA r_empty_data_structure_ref TYPE HANDLE struct_descr.
+      CATCH cx_sy_struct_creation cx_sy_move_cast_error.
+        RAISE EXCEPTION TYPE cx_sy_create_data_error.
+    ENDTRY.
   ENDMETHOD.
 
 
@@ -170,7 +268,14 @@ CLASS zcl_ddve_debugger_integration IMPLEMENTATION.
   METHOD get_ref_to_any_content.
     DATA(readable_xml_data) = get_data_as_readable_xml( i_variable_name ).
 
-    DATA(empty_data_structure_ref) = create_empty_data_structure( i_variable_name  ).
+    TRY.
+        DATA(empty_data_structure_ref) = create_empty_data_structure( i_variable_name  ).
+      CATCH cx_sy_create_data_error.
+        " anonymous/object-bound type: rebuild the structure type from its
+        " components instead (TODO #7 fallback)
+        empty_data_structure_ref = create_structure_by_components( i_variable_name = i_variable_name
+                                                                   i_xml           = readable_xml_data ).
+    ENDTRY.
 
     r_content_ref = fill_empty_data_from_xml( i_xml                      = readable_xml_data
                                               i_empty_data_structure_ref = empty_data_structure_ref    ).

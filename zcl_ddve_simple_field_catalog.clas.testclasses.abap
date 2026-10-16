@@ -39,16 +39,16 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
              col3 TYPE my_itab_type,
            END OF nested_type.
 
-    FINAL(itab_in_struc) = VALUE nested_type( col1 = 1
+    DATA(itab_in_struc) = VALUE nested_type( col1 = 1
 
-                                              col2 = VALUE #( col1 = 11
-                                                              col2 = 22 )
-                                              col3 = VALUE #( ( col1 = 311
-                                                                col2 = VALUE #( col1 = 3121
-                                                                                col2 = 3122 ) )
-                                                              ( col1 = 321
-                                                                col2 = VALUE #( col1 = 3221
-                                                                                col2 = 3222 ) ) ) ).
+                                             col2 = VALUE #( col1 = 11
+                                                             col2 = 22 )
+                                             col3 = VALUE #( ( col1 = 311
+                                                               col2 = VALUE #( col1 = 3121
+                                                                               col2 = 3122 ) )
+                                                             ( col1 = 321
+                                                               col2 = VALUE #( col1 = 3221
+                                                                               col2 = 3222 ) ) ) ).
 
     field_catalog = cut->get_by_data( i_structure = itab_in_struc ).
 
@@ -80,16 +80,16 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
            END OF ts_flight_data_deep,
            tt_flight_data_deep TYPE STANDARD TABLE OF ts_flight_data_deep WITH EMPTY KEY.
 
-    FINAL(flights) = VALUE tt_flight_data_deep( col1 = VALUE #( carrid = 'AA'
-                                                                connid = '0017'
-                                                                fldate = '20170810'
-                                                                price  = '422.94 '
-                                                                ( )
-                                                                ( ) )
-                                                ( )
-                                                ( ) ).
+    DATA(flights) = VALUE tt_flight_data_deep( col1 = VALUE #( carrid = 'AA'
+                                                               connid = '0017'
+                                                               fldate = '20170810'
+                                                               price  = '422.94 '
+                                                               ( )
+                                                               ( ) )
+                                               ( )
+                                               ( ) ).
 
-    FINAL(lt_field_catalog) = cut->get_by_data( i_table = flights ).
+    DATA(lt_field_catalog) = cut->get_by_data( i_table = flights ).
 
     cl_abap_unit_assert=>assert_not_initial( act = lt_field_catalog[]
                                              msg = |Field catalog was not created|         ).
@@ -98,9 +98,9 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
   METHOD get_fieldcatalog_nostruc_table.
     TYPES tt_nostruc TYPE STANDARD TABLE OF i WITH EMPTY KEY.
 
-    FINAL(table) = VALUE tt_nostruc( ( 1 ) ( 2 ) ( 3 ) ).
+    DATA(table) = VALUE tt_nostruc( ( 1 ) ( 2 ) ( 3 ) ).
 
-    FINAL(lt_field_catalog) = cut->get_by_data( i_table = table ).
+    DATA(lt_field_catalog) = cut->get_by_data( i_table = table ).
 
     cl_abap_unit_assert=>assert_not_initial( act = lt_field_catalog[]
                                              msg = |Field catalog was not created|         ).
@@ -113,7 +113,7 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
     TYPES   dummy_field_2 TYPE string.
     TYPES END OF gtyp_struct.
 
-    FINAL(ls_struct)
+    DATA(ls_struct)
         = VALUE gtyp_struct( mandt         = '000'
                              logsys        = 'DUMMY_1'
                              dummy_field_1 = 666
@@ -122,7 +122,7 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
     DATA(lt_field_catalog_act) = cut->get_fieldcat_from_local_type(
         i_rtti = CAST cl_abap_structdescr( cl_abap_structdescr=>describe_by_data( p_data = ls_struct ) ) ).
 
-    FINAL(lt_field_catalog_exp) = VALUE lvc_t_fcat(
+    DATA(lt_field_catalog_exp) = VALUE lvc_t_fcat(
         ( fieldname = 'MANDT'         outputlen = '000003' seltext = 'MANDT'         inttype = 'C' )
         ( fieldname = 'MTEXT'         outputlen = '000025' seltext = 'MTEXT'         inttype = 'C' )
         ( fieldname = 'ORT01'         outputlen = '000025' seltext = 'ORT01'         inttype = 'C' )
@@ -160,7 +160,7 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
     GET REFERENCE OF rows INTO DATA(table_ref).
 
     " when
-    FINAL(fcat) = cut->get_by_reference( table_ref ).
+    DATA(fcat) = cut->get_by_reference( table_ref ).
 
     " then
     cl_abap_unit_assert=>assert_equals( exp = 2
@@ -179,7 +179,7 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
 
     GET REFERENCE OF t000_row INTO DATA(struct_ref).
 
-    FINAL(fcat) = cut->get_by_reference( struct_ref ).
+    DATA(fcat) = cut->get_by_reference( struct_ref ).
 
     cl_abap_unit_assert=>assert_not_initial( act = fcat
                                              msg = |DDIC field catalog must not be empty| ).
@@ -193,7 +193,7 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
 
     APPEND VALUE t000( mandt = '000' ) TO t000_tab.
 
-    FINAL(fcat) = cut->get_by_data( i_table = t000_tab ).
+    DATA(fcat) = cut->get_by_data( i_table = t000_tab ).
 
     cl_abap_unit_assert=>assert_not_initial( act = fcat
                                              msg = |DDIC field catalog via get_by_data must not be empty| ).
