@@ -6,7 +6,7 @@ ENHANCEMENT 0 Z_STRUC_V_BUILD_SERVICES_MENUE.
   l_node-relatkey  = cl_tpda_services_tools=>c_special.
   l_node-n_image   = cl_tpda_icons=>tpda_icon_download.
   l_node-relatship = cl_gui_simple_tree=>relat_last_child.
-  l_node-text      = 'Data for Abap View'.
+  l_node-text      = 'Data for ABAP View'.
 
   APPEND l_node TO p_it_menue_tree.
 

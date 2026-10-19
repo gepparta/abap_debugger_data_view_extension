@@ -18,7 +18,7 @@ CLASS ltc_table_enh_should DEFINITION FOR TESTING
       handle_itab_in_itab         FOR TESTING,
       st05_main_record_table      FOR TESTING RAISING cx_static_check,
       ris_t_metadata              FOR TESTING RAISING cx_static_check,
-      "       |----- max. 30 Zeichen ------|
+      "       |----- max. 30 characters ------|
       detect_clone_by_index_column  FOR TESTING,
       not_mistake_real_for_clone    FOR TESTING,
       extract_indexes_in_alv_order  FOR TESTING,
@@ -126,7 +126,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( EXPORTING act = output
                                                   exp = output_exp
-                                                  msg = |Itab in itab formating is not as expected|
+                                                  msg = |Itab in itab formatting is not as expected|
                                                   quit = if_aunit_constants=>method ).
 
   ENDMETHOD.
@@ -166,7 +166,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( EXPORTING act = output
                                                   exp = output_exp
-                                                  msg = |Structure in itab formating is not as expected|
+                                                  msg = |Structure in itab formatting is not as expected|
                                                   quit = if_aunit_constants=>method ).
   ENDMETHOD.
 

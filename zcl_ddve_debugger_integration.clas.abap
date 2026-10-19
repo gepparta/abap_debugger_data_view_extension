@@ -349,7 +349,7 @@ CLASS zcl_ddve_debugger_integration IMPLEMENTATION.
       ENDIF.
       DATA(current_node_name) = node->get_name( ).
       IF last_node_name = |values|.
-        " we have to rename current node (start element), as its name can lead to unseccessfull transformation
+        " we have to rename current node (start element), as its name can lead to an unsuccessful transformation
         node->set_name( name = i_new_node_name ).
         EXIT.
       ENDIF.

@@ -3,7 +3,7 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <TOOL>HOOK_IMPL</TOOL>
-   <SHORTTEXT>Erweiterung des ALVs im ABAP Debugger</SHORTTEXT>
+   <SHORTTEXT>ALV extension in the ABAP Debugger</SHORTTEXT>
    <ORIGINAL_OBJECT>
     <PGMID>R3TR</PGMID>
     <ORG_OBJ_TYPE>FUGR</ORG_OBJ_TYPE>
@@ -59,7 +59,7 @@
        <FLAG_CNTXT>X</FLAG_CNTXT>
        <STATUS>R</STATUS>
        <LENGTH>056</LENGTH>
-       <TEXT>Erweiterung des ALVs im ABAP Debugger</TEXT>
+       <TEXT>ALV extension in the ABAP Debugger</TEXT>
       </SOTR_TEXT>
      </ENTRIES>
     </item>

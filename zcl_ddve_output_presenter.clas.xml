@@ -4,7 +4,7 @@
   <asx:values>
    <VSEOCLASS>
     <CLSNAME>ZCL_DDVE_OUTPUT_PRESENTER</CLSNAME>
-    <LANGU>D</LANGU>
+    <LANGU>E</LANGU>
     <DESCRIPT>encapsulate cl_demo_output use</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
@@ -13,7 +13,7 @@
    </VSEOCLASS>
    <DESCRIPTIONS_CLASS>
     <SEOCLASSTX>
-     <LANGU>D</LANGU>
+     <LANGU>E</LANGU>
      <DESCRIPT>encapsulate cl_demo_output use</DESCRIPT>
     </SEOCLASSTX>
    </DESCRIPTIONS_CLASS>

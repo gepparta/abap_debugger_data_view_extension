@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_DDVE_TABLE</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Erweiterung des ABAP Debuggers</DESCRIPT>
+    <DESCRIPT>ABAP Debugger extension</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
