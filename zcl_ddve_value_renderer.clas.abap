@@ -268,7 +268,7 @@ CLASS zcl_ddve_value_renderer IMPLEMENTATION.
     " abort visible in the generated output including the raising position
     i_error->get_source_position( IMPORTING program_name = DATA(program_name)
                                             source_line  = DATA(source_line) ).
-    r_current_context = |{ i_current_context } " ! DDVE: Aufbereitung unvollständig - { i_error->get_text( ) } ({ program_name } Zeile { source_line })|.
+    r_current_context = |{ i_current_context } " ! DDVE: Rendering incomplete - { i_error->get_text( ) } ({ program_name } line { source_line })|.
   ENDMETHOD.
 
   METHOD right_hand_side.

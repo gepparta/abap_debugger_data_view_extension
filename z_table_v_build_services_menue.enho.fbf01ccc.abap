@@ -7,7 +7,7 @@ ENHANCEMENT 0 Z_TABLE_V_BUILD_SERVICES_MENUE.
  l_zz_node-relatkey  = cl_tpda_services_tools=>c_special.
  l_zz_node-n_image   = cl_tpda_icons=>tpda_icon_download.
  l_zz_node-relatship = cl_gui_simple_tree=>relat_last_child.
- l_zz_node-text      = 'Data for Abap View'.
+ l_zz_node-text      = 'Data for ABAP View'.
 
  APPEND l_zz_node TO p_it_menue_tree.
 ENDENHANCEMENT.

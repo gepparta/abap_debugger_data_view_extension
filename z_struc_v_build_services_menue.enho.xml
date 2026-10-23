@@ -3,7 +3,7 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <TOOL>HOOK_IMPL</TOOL>
-   <SHORTTEXT>AUnit - Erweiterung der Struktur View</SHORTTEXT>
+   <SHORTTEXT>ABAP Debugger extension for structure view</SHORTTEXT>
    <ORIGINAL_OBJECT>
     <PGMID>R3TR</PGMID>
     <ORG_OBJ_TYPE>CLAS</ORG_OBJ_TYPE>
@@ -50,7 +50,7 @@
        <FLAG_CNTXT>X</FLAG_CNTXT>
        <STATUS>R</STATUS>
        <LENGTH>056</LENGTH>
-       <TEXT>AUnit - Erweiterung der Struktur View</TEXT>
+       <TEXT>ABAP Debugger extension for structure view</TEXT>
       </SOTR_TEXT>
      </ENTRIES>
     </item>

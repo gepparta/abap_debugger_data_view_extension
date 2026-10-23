@@ -9,7 +9,7 @@ CLASS ltc_renderer_should DEFINITION FINAL FOR TESTING
     DATA cut TYPE REF TO zcl_ddve_value_renderer.
 
     METHODS: setup,
-             "       |----- max. 30 Zeichen ------|
+             "       |----- max. 30 characters ------|
              render_empty_itab_untyped     FOR TESTING RAISING cx_static_check,
              render_empty_itab_typed       FOR TESTING RAISING cx_static_check.
 ENDCLASS.

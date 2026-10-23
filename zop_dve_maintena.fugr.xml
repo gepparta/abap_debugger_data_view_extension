@@ -60,47 +60,47 @@
       <RSFDO>
        <PARAMETER>VIEW_ACTION</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Aktion mit Tabelle: anz./änd./transp. (S/U/T)</STEXT>
+       <STEXT>Table action: display/change/transport (S/U/T)</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>VIEW_NAME</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Name der Tabelle</STEXT>
+       <STEXT>Table name</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>CORR_NUMBER</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Korrekturnummer für durchgeführte Änderungen</STEXT>
+       <STEXT>Correction number for changes made</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>DBA_SELLIST</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Selektionsbedingungen für den DB-Zugriff</STEXT>
+       <STEXT>Selection conditions for database access</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>DPL_SELLIST</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Selektionsbedingungen für die Anzeige</STEXT>
+       <STEXT>Selection conditions for display</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>EXCL_CUA_FUNCT</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Tabelle mit dynam. zu deaktivierenden CUA-Funkt.</STEXT>
+       <STEXT>Table of CUA functions to deactivate dynamically</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>X_HEADER</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Kontrollblocktabelle für die Tabelle</STEXT>
+       <STEXT>Control block table for the table</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>X_NAMTAB</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Kontrollblocktabelle für die Tabellen-Felder</STEXT>
+       <STEXT>Control block table for the table fields</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>MISSING_CORR_NUMBER</PARAMETER>
        <KIND>X</KIND>
-       <STEXT>Korrekturnummer fehlt</STEXT>
+       <STEXT>Correction number missing</STEXT>
       </RSFDO>
      </DOCUMENTATION>
     </item>
@@ -182,87 +182,87 @@
       <RSFDO>
        <PARAMETER>FCODE</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>gewünschte Funktion des Bausteins</STEXT>
+       <STEXT>Requested function of the function module</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>VIEW_ACTION</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Aktion mit Tabelle: anz./änd./transp. (S/U/T)</STEXT>
+       <STEXT>Table action: display/change/transport (S/U/T)</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>VIEW_NAME</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Name der Tabelle</STEXT>
+       <STEXT>Table name</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>CORR_NUMBER</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Korrekturnummer für durchgeführte Änderungen</STEXT>
+       <STEXT>Correction number for changes made</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>LAST_ACT_ENTRY</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Index der Cursorposition in der Anzeigetabelle</STEXT>
+       <STEXT>Cursor position index in the display table</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>UCOMM</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>letztes User-command innerhalb der Viewpflege</STEXT>
+       <STEXT>Last user command in view maintenance</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>UPDATE_REQUIRED</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Flag: Einträge verändert, Sichern erforderlich</STEXT>
+       <STEXT>Flag: entries changed, saving required</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>CORR_KEYTAB</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Tabelle mit den Keys der zu transport. Einträge</STEXT>
+       <STEXT>Table of keys for entries to transport</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>DBA_SELLIST</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Selektionsbedingungen für den DB-Zugriff</STEXT>
+       <STEXT>Selection conditions for database access</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>DPL_SELLIST</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Selektionsbedingungen für die Anzeige</STEXT>
+       <STEXT>Selection conditions for display</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>EXCL_CUA_FUNCT</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Tab. der nicht zu aktivierenden CUA-Funktionen</STEXT>
+       <STEXT>Table of CUA functions not to activate</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>EXTRACT</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Tab. der gerade sichtbaren Daten (Anzeigetabelle</STEXT>
+       <STEXT>Table of currently visible data (display table)</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>TOTAL</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Tabelle, mit allen von der DB gelesenen Daten</STEXT>
+       <STEXT>Table of all data read from the database</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>X_HEADER</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Kontrollblocktabelle für die Tabelle</STEXT>
+       <STEXT>Control block table for the table</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>X_NAMTAB</PARAMETER>
        <KIND>P</KIND>
-       <STEXT>Kontrollblocktabelle für die Tabellen-Felder</STEXT>
+       <STEXT>Control block table for the table fields</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>MISSING_CORR_NUMBER</PARAMETER>
        <KIND>X</KIND>
-       <STEXT>Korrekturnummer fehlt</STEXT>
+       <STEXT>Correction number missing</STEXT>
       </RSFDO>
       <RSFDO>
        <PARAMETER>SAVING_CORRECTION_FAILED</PARAMETER>
        <KIND>X</KIND>
-       <STEXT>Fehler beim Sichern der Korrektureinträge</STEXT>
+       <STEXT>Error saving correction entries</STEXT>
       </RSFDO>
      </DOCUMENTATION>
     </item>

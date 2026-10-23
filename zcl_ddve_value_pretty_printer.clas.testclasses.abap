@@ -113,7 +113,7 @@ CLASS ltcl_typed_value_should DEFINITION FINAL
     DATA cut TYPE REF TO zcl_ddve_value_pretty_printer.
 
     METHODS: setup,
-             "       |----- max. 30 Zeichen ------|
+             "       |----- max. 30 characters ------|
              format_typed_table            FOR TESTING RAISING cx_static_check,
              format_typed_structure        FOR TESTING RAISING cx_static_check,
              format_typed_class_type       FOR TESTING RAISING cx_static_check,

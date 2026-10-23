@@ -5,19 +5,13 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_DDVE_COMPONENT</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Component Representation for Abap Debugger Enhancement</DESCRIPT>
+    <DESCRIPT>Component Representation for ABAP Debugger Enhancement</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
     <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
    </VSEOCLASS>
-   <DESCRIPTIONS_CLASS>
-    <SEOCLASSTX>
-     <LANGU>D</LANGU>
-     <DESCRIPT>Component Representation for Abap Debugger Enhancement</DESCRIPT>
-    </SEOCLASSTX>
-   </DESCRIPTIONS_CLASS>
   </asx:values>
  </asx:abap>
 </abapGit>

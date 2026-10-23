@@ -1,4 +1,4 @@
-"! Component representation for Abap Debugger Enhancement
+"! Component representation for ABAP Debugger Enhancement
 "! is responsible for representing components/fields
 "! within a -component = 'component value' statement
 CLASS zcl_ddve_component DEFINITION

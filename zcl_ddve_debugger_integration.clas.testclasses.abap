@@ -9,7 +9,7 @@ CLASS ltc_dbg_integration_should DEFINITION FINAL FOR TESTING
     DATA cut TYPE REF TO zcl_ddve_debugger_integration.
 
     METHODS: setup,
-             "       |----- max. 30 Zeichen ------|
+             "       |----- max. 30 characters ------|
              get_comps_of_anonymous_type   FOR TESTING RAISING cx_static_check,
              get_comps_only_of_top_level   FOR TESTING RAISING cx_static_check,
              get_no_comps_from_invalid_xml FOR TESTING RAISING cx_static_check,

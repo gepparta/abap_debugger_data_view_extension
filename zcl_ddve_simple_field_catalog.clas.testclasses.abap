@@ -54,13 +54,13 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( exp = |COL1|
                                         act = field_catalog[ 1 ]-fieldname
-                                        msg = |Order of fieldcatalog fieldnames is not ok|   ).
+                                        msg = |Field catalog field names are in the wrong order|   ).
     cl_abap_unit_assert=>assert_equals( exp = |COL2|
                                         act = field_catalog[ 2 ]-fieldname
-                                        msg = |Order of fieldcatalog fieldnames is not ok|   ).
+                                        msg = |Field catalog field names are in the wrong order|   ).
     cl_abap_unit_assert=>assert_equals( exp = |COL3|
                                         act = field_catalog[ 3 ]-fieldname
-                                        msg = |Order of fieldcatalog fieldnames is not ok|   ).
+                                        msg = |Field catalog field names are in the wrong order|   ).
   ENDMETHOD.
 
   METHOD setup.
@@ -145,7 +145,7 @@ CLASS ltcl_fieldcatalog_should IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( exp = lt_field_catalog_exp
                                         act = lt_field_catalog_act
-                                        msg = |Fieldcatalogue could not be retrieverd for local type with include|  ).
+                                        msg = |Field catalog could not be retrieved for local type with include|  ).
   ENDMETHOD.
 
   METHOD get_by_reference_table_ref.

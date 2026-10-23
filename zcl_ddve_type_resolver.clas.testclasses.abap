@@ -11,7 +11,7 @@ CLASS ltc_type_resolver_should DEFINITION FINAL FOR TESTING
 
     METHODS setup.
 
-    "       |----- max. 30 Zeichen ------|
+    "       |----- max. 30 characters ------|
     METHODS resolve_ddic_type             FOR TESTING RAISING cx_static_check.
     METHODS resolve_plain_name            FOR TESTING RAISING cx_static_check.
     METHODS resolve_global_class_type     FOR TESTING RAISING cx_static_check.
@@ -51,13 +51,13 @@ CLASS ltc_type_resolver_should IMPLEMENTATION.
   METHOD resolve_global_class_type.
     cl_abap_unit_assert=>assert_equals( act = cut->resolve( '\CLASS=ZCL_ORDER\TYPE=TY_ITEM' )
                                         exp = `ZCL_ORDER=>TY_ITEM`
-                                        msg = 'Klassentyp muss ueber => adressiert werden' ).
+                                        msg = 'Class type must be addressed using =>' ).
   ENDMETHOD.
 
   METHOD resolve_interface_type.
     cl_abap_unit_assert=>assert_equals( act = cut->resolve( '\INTERFACE=ZIF_ORDER\TYPE=TY_ITEM' )
                                         exp = `ZIF_ORDER=>TY_ITEM`
-                                        msg = 'Interfacetyp muss ueber => adressiert werden' ).
+                                        msg = 'Interface type must be addressed using =>' ).
   ENDMETHOD.
 
   METHOD resolve_report_local_type.
@@ -75,7 +75,7 @@ CLASS ltc_type_resolver_should IMPLEMENTATION.
   METHOD resolve_local_class_type.
     cl_abap_unit_assert=>assert_equals( act = cut->resolve( '\PROGRAM=Z_DEMO\CLASS=LCL_HELPER\TYPE=TY_X' )
                                         exp = `LCL_HELPER=>TY_X`
-                                        msg = 'Typ einer lokalen Klasse muss ueber => adressiert werden' ).
+                                        msg = 'Local class type must be addressed using =>' ).
   ENDMETHOD.
 
   METHOD resolve_type_pool_type.
@@ -86,17 +86,17 @@ CLASS ltc_type_resolver_should IMPLEMENTATION.
 
   METHOD reject_method_local_type.
     cl_abap_unit_assert=>assert_initial( act = cut->resolve( '\CLASS=ZCL_ORDER\METHOD=PROCESS\TYPE=TY_X' )
-                                         msg = 'Methodenlokaler Typ ist nicht adressierbar' ).
+                                         msg = 'Method-local type cannot be addressed' ).
   ENDMETHOD.
 
   METHOD reject_form_local_type.
     cl_abap_unit_assert=>assert_initial( act = cut->resolve( '\PROGRAM=Z_DEMO\FORM=DO_IT\TYPE=TY_X' )
-                                         msg = 'FORM-lokaler Typ ist nicht adressierbar' ).
+                                         msg = 'FORM-local type cannot be addressed' ).
   ENDMETHOD.
 
   METHOD reject_generated_type.
     cl_abap_unit_assert=>assert_initial( act = cut->resolve( '\TYPE=%_T00004S00000000O0000012345' )
-                                         msg = 'Generierter Typname ist im Quelltext nicht gueltig' ).
+                                         msg = 'Generated type name is not valid in source code' ).
   ENDMETHOD.
 
   METHOD reject_empty_input.
@@ -107,13 +107,13 @@ CLASS ltc_type_resolver_should IMPLEMENTATION.
   METHOD derive_name_from_field_symbol.
     cl_abap_unit_assert=>assert_equals( act = cut->derive_variable_name( '<TABLE_4>' )
                                         exp = `TABLE_4`
-                                        msg = 'Spitzklammern muessen entfernt werden' ).
+                                        msg = 'Angle brackets must be removed' ).
   ENDMETHOD.
 
   METHOD derive_name_from_header_tab.
     cl_abap_unit_assert=>assert_equals( act = cut->derive_variable_name( 'FLIGHTS[]' )
                                         exp = `FLIGHTS`
-                                        msg = 'Body-Klammern [] muessen entfernt werden' ).
+                                        msg = 'Table body brackets [] must be removed' ).
   ENDMETHOD.
 
   METHOD keep_valid_name_unchanged.
@@ -124,6 +124,6 @@ CLASS ltc_type_resolver_should IMPLEMENTATION.
 
   METHOD reject_component_path_as_name.
     cl_abap_unit_assert=>assert_initial( act = cut->derive_variable_name( 'LS_FLIGHT-PRICE' )
-                                         msg = 'Komponentenpfad ist kein gueltiger Variablenname' ).
+                                         msg = 'Component path is not a valid variable name' ).
   ENDMETHOD.
 ENDCLASS.

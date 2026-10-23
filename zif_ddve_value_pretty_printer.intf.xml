@@ -5,7 +5,7 @@
    <VSEOINTERF>
     <CLSNAME>ZIF_DDVE_VALUE_PRETTY_PRINTER</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Interface Value Contructor Pretty Printer</DESCRIPT>
+    <DESCRIPT>Interface Value Constructor Pretty Printer</DESCRIPT>
     <EXPOSURE>2</EXPOSURE>
     <STATE>1</STATE>
     <UNICODE>X</UNICODE>

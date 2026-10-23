@@ -17,7 +17,7 @@ ENHANCEMENT 0 Z_STRUC_V_BUILD_SERVICES_MENUE.
       CATCH cx_root INTO DATA(lx_root).
         " dont want to crash the debugger - but tell the user WHY nothing is shown
         NEW zcl_ddve_output_presenter( )->display_text(
-                |DDVE: Anzeige nicht möglich.\n| &&
+                |DDVE: Unable to display data.\n| &&
                 |{ cl_abap_typedescr=>describe_by_object_ref( lx_root )->get_relative_name( ) }: | &&
                 |{ lx_root->get_text( ) }| ).
     ENDTRY.

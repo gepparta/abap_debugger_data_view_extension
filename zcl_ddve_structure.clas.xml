@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_DDVE_STRUCTURE</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>AUnit - Struktur Darstellung</DESCRIPT>
+    <DESCRIPT>Structure representation for the ABAP Debugger</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

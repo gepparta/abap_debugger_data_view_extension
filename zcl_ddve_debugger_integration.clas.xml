@@ -5,19 +5,13 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_DDVE_DEBUGGER_INTEGRATION</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Abap Debugger Integration</DESCRIPT>
+    <DESCRIPT>ABAP Debugger Integration</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
     <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
    </VSEOCLASS>
-   <DESCRIPTIONS_CLASS>
-    <SEOCLASSTX>
-     <LANGU>D</LANGU>
-     <DESCRIPT>Abap Debugger Integration</DESCRIPT>
-    </SEOCLASSTX>
-   </DESCRIPTIONS_CLASS>
   </asx:values>
  </asx:abap>
 </abapGit>

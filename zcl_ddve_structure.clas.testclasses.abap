@@ -57,7 +57,7 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( act   = content
                                         exp   = content_expected
-                                        msg   = 'Struktur String wurde nicht richtig aufbereitet'    ).
+                                        msg   = 'Structure string was not formatted correctly'    ).
   ENDMETHOD.
 
   METHOD nested_structure.
@@ -86,7 +86,7 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( act   = content
                                         exp   = content_expected
-                                        msg   = 'Nested structure was not formated as expected'    ).
+                                        msg   = 'Nested structure was not formatted as expected'    ).
 
   ENDMETHOD.
 
@@ -123,7 +123,7 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( act   =  content
                                         exp   =  content_expected
-                                        msg   = |Mixed structure was not formated as expected|    ).
+                                        msg   = |Mixed structure was not formatted as expected|    ).
   ENDMETHOD.
 
 
@@ -165,7 +165,7 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
                                                                 i_struc_name         = |ITAB_IN_STRUCTURE|  ).
     cl_abap_unit_assert=>assert_equals( act   =  content
                                         exp   =  content_expected
-                                        msg   = |itab in structure was not formated as expected|    ).
+                                        msg   = |itab in structure was not formatted as expected|    ).
   ENDMETHOD.
 
 
@@ -185,7 +185,7 @@ CLASS ltc_struc_enh_should_process IMPLEMENTATION.
                                                                 i_struc_name         = |INCLUDE_IN_STRUCTURE|  ).
     cl_abap_unit_assert=>assert_equals( act   =  content
                                         exp   =  content_expected
-                                        msg   = |include in structure was not formated as expected| ).
+                                        msg   = |include in structure was not formatted as expected| ).
 
 
   ENDMETHOD.
@@ -341,7 +341,7 @@ CLASS ltc_struc_enh_should_not IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( act   = content
                                         exp   = content_expected
-                                        msg   = 'Nested structure was not formated as expected'    ).
+                                        msg   = 'Nested structure was not formatted as expected'    ).
   ENDMETHOD.
 
 ENDCLASS.

@@ -18,7 +18,7 @@ CLASS ltc_table_enh_should DEFINITION FOR TESTING
       handle_itab_in_itab         FOR TESTING,
       st05_main_record_table      FOR TESTING RAISING cx_static_check,
       ris_t_metadata              FOR TESTING RAISING cx_static_check,
-      "       |----- max. 30 Zeichen ------|
+      "       |----- max. 30 characters ------|
       detect_clone_by_index_column  FOR TESTING,
       not_mistake_real_for_clone    FOR TESTING,
       extract_indexes_in_alv_order  FOR TESTING,
@@ -126,7 +126,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( EXPORTING act = output
                                                   exp = output_exp
-                                                  msg = |Itab in itab formating is not as expected|
+                                                  msg = |Itab in itab formatting is not as expected|
                                                   quit = if_aunit_constants=>method ).
 
   ENDMETHOD.
@@ -166,7 +166,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_equals( EXPORTING act = output
                                                   exp = output_exp
-                                                  msg = |Structure in itab formating is not as expected|
+                                                  msg = |Structure in itab formatting is not as expected|
                                                   quit = if_aunit_constants=>method ).
   ENDMETHOD.
 
@@ -176,8 +176,8 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
 
     DATA(table) = VALUE st05_main_record_table( ( date                           = lv_date
                                                   time                           = lv_time
-                                                  duration                       = '10.5'
-                                                  number_of_rows                 = '11.5'
+                                                  duration                       = 11
+                                                  number_of_rows                 = 12
                                                   object                         = 'OBJECT'
                                                   statement_with_values          = `STATEMENT_WITH_VALUES`
                                                   array_size                     = 12
@@ -223,18 +223,57 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
 
 
   METHOD ris_t_metadata.
-    DATA(table) = VALUE ris_t_metadata(
+    " Keep the legacy metadata shape local: SAP changed RIS_T_METADATA
+    " between releases, while this test exercises nested table rendering.
+    TYPES: BEGIN OF ty_screen_group,
+             name         TYPE c LENGTH 30,
+             parent_group TYPE c LENGTH 30,
+             text_ref     TYPE string,
+           END OF ty_screen_group,
+           ty_screen_groups TYPE STANDARD TABLE OF ty_screen_group WITH EMPTY KEY,
+           BEGIN OF ty_screen_element,
+             index     TYPE i,
+             name      TYPE c LENGTH 30,
+             type      TYPE c LENGTH 2,
+             group     TYPE c LENGTH 30,
+             line      TYPE i,
+             for       TYPE c LENGTH 30,
+             rb_group  TYPE c LENGTH 30,
+             label_for TYPE c LENGTH 30,
+             label_ref TYPE string,
+           END OF ty_screen_element,
+           ty_screen_elements TYPE STANDARD TABLE OF ty_screen_element WITH EMPTY KEY,
+           BEGIN OF ty_relationship,
+             trobjtype   TYPE c LENGTH 4,
+             subtype     TYPE c LENGTH 4,
+             legacy_type TYPE c LENGTH 3,
+             group       TYPE i,
+           END OF ty_relationship,
+           ty_relationships TYPE STANDARD TABLE OF ty_relationship WITH EMPTY KEY,
+           BEGIN OF ty_metadata,
+             trobjtype             TYPE c LENGTH 4,
+             subtype               TYPE c LENGTH 4,
+             legacy_type           TYPE c LENGTH 3,
+             search_groups         TYPE ty_screen_groups,
+             search_elements       TYPE ty_screen_elements,
+             where_used            TYPE ty_relationships,
+             environment           TYPE ty_relationships,
+             model_implementations TYPE string_table,
+           END OF ty_metadata,
+           ty_metadata_table TYPE STANDARD TABLE OF ty_metadata WITH EMPTY KEY.
+
+    DATA(table) = VALUE ty_metadata_table(
       ( trobjtype                  = '????'
         subtype                    = ''
         legacy_type                = 'DWY'
-        search_groups              = VALUE ris_t_md_screen_groups(
+        search_groups              = VALUE ty_screen_groups(
                                           ( name         = 'STANDARD'
                                             parent_group = ''
                                             text_ref     = 'TEXT-S01' )
                                           ( name         = 'EINSTELLUNG'
                                             parent_group = ''
                                             text_ref     = '' ) )
-        search_elements            = VALUE ris_t_md_screen_elements(
+        search_elements            = VALUE ty_screen_elements(
                                           ( index     = 1
                                             name      = 'KEY1'
                                             type      = 'SO'
@@ -253,7 +292,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
                                             rb_group  = ''
                                             label_for = ''
                                             label_ref = '' ) )
-        where_used                 = VALUE ris_t_md_relationship(
+        where_used                 = VALUE ty_relationships(
                                           ( trobjtype   = 'ECTC'
                                             subtype     = ''
                                             legacy_type = 'GC'
@@ -262,7 +301,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
                                             subtype     = ''
                                             legacy_type = 'GW'
                                             group       = 1 ) )
-        environment                = VALUE ris_t_md_relationship(
+        environment                = VALUE ty_relationships(
                                           ( trobjtype   = 'FUNC'
                                             subtype     = ''
                                             legacy_type = 'FF'
@@ -271,19 +310,19 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
                                             subtype     = ''
                                             legacy_type = 'A'
                                             group       = 1 ) )
-        model_implementations      = VALUE ris_t_md_model_implementation( )
+        model_implementations      = VALUE string_table( )
 )
       ( trobjtype                  = '????'
         subtype                    = ''
         legacy_type                = 'GP'
-        search_groups              = VALUE ris_t_md_screen_groups(
+        search_groups              = VALUE ty_screen_groups(
                                           ( name         = 'STANDARD'
                                             parent_group = ''
                                             text_ref     = 'TEXT-S01' )
                                           ( name         = 'EINSTELLUNG'
                                             parent_group = ''
                                             text_ref     = '' ) )
-        search_elements            = VALUE ris_t_md_screen_elements(
+        search_elements            = VALUE ty_screen_elements(
                                           ( index     = 1
                                             name      = 'KEY1'
                                             type      = 'SO'
@@ -302,7 +341,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
                                             rb_group  = ''
                                             label_for = ''
                                             label_ref = '' ) )
-        where_used                 = VALUE ris_t_md_relationship(
+        where_used                 = VALUE ty_relationships(
                                           ( trobjtype   = 'ECTC'
                                             subtype     = ''
                                             legacy_type = 'GC'
@@ -311,7 +350,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
                                             subtype     = ''
                                             legacy_type = 'GW'
                                             group       = 1 ) )
-        environment                = VALUE ris_t_md_relationship(
+        environment                = VALUE ty_relationships(
                                           ( trobjtype   = 'FUNC'
                                             subtype     = ''
                                             legacy_type = 'FF'
@@ -320,7 +359,7 @@ CLASS ltc_table_enh_should IMPLEMENTATION.
                                             subtype     = ''
                                             legacy_type = 'A'
                                             group       = 1 ) )
-        model_implementations      = VALUE ris_t_md_model_implementation( )
+        model_implementations      = VALUE string_table( )
 
 ) ).
 
